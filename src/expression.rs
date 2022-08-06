@@ -20,12 +20,19 @@ pub enum Expression {
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
+/// Built-in operators
 pub enum BuiltIn {
+    /// "+"
     Plus,
+    /// "-"
     Minus,
+    /// "*"
     Times,
+    /// "/"
     Divide,
+    /// "="
     Equal,
+    /// "not"
     Not,
 }
 
@@ -36,7 +43,9 @@ impl CheapClone for Atom {}
 #[derive(Debug, PartialEq, Clone)]
 pub enum Atom {
     Number(f64),
+    /// A keyword of the form `:keyword`
     Keyword(SmallString),
+    /// `true` or `false`
     Boolean(bool),
     // TODO: remove this from Atom since BuiltIn is
     // used in FnIdentifier?

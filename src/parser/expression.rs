@@ -16,11 +16,17 @@ use crate::{
     expression::{Application, Expression, FnIdentifier},
     parse_atom,
     parser::atom::parse_fn_identifier,
-    IResult, SmallString,
+    IResult,
 };
 
 pub fn parse_expression(input: &str) -> IResult<Expression> {
-    alt((parse_atom.map(Expression::Atom),))(input)
+    preceded(
+        multispace0,
+        alt((
+            parse_atom.map(Expression::Atom),
+            parse_application.map(Expression::Application),
+        )),
+    )(input)
 }
 
 // Based on https://github.com/Geal/nom/blob/761ab0a24fccb4c560367b583b608fbae5f31647/examples/s_expression.rs#L155
@@ -94,6 +100,32 @@ mod tests {
                         Expression::Atom(Atom::Number(5.0)),
                         Expression::Atom(Atom::Number(2.0)),
                         Expression::Atom(Atom::Number(3.0))
+                    ]
+                }
+            ))
+        );
+
+        assert_eq!(
+            parse_application("(+ (- 2 3) 5)"),
+            Ok((
+                "",
+                Application {
+                    name: FnIdentifier::BuiltIn(BuiltIn::Plus),
+                    arguments: vec![
+                        Expression::Application(Application {
+                            name: FnIdentifier::BuiltIn(
+                                BuiltIn::Minus
+                            ),
+                            arguments: vec![
+                                Expression::Atom(Atom::Number(
+                                    2.0
+                                )),
+                                Expression::Atom(Atom::Number(
+                                    3.0
+                                ))
+                            ]
+                        },),
+                        Expression::Atom(Atom::Number(5.0))
                     ]
                 }
             ))
