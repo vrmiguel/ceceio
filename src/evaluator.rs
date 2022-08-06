@@ -1,5 +1,10 @@
 use crate::{
-    expression::{Application, Atom, If, IfElse},
+    expression::{
+        elements::{
+            Application, Atom, FnIdentifier, If, IfElse,
+        },
+        BuiltIn,
+    },
     Expression, Result,
 };
 
@@ -11,6 +16,19 @@ pub struct Env {}
 
 pub trait Evaluable {
     fn evaluate(self, env: &mut Env) -> Result<Expression>;
+}
+
+impl Evaluable for BuiltIn {
+    fn evaluate(self, _: &mut Env) -> Result<Expression> {
+        match self {
+            BuiltIn::Plus => todo!(),
+            BuiltIn::Minus => todo!(),
+            BuiltIn::Times => todo!(),
+            BuiltIn::Divide => todo!(),
+            BuiltIn::Equal => todo!(),
+            BuiltIn::Not => todo!(),
+        }
+    }
 }
 
 impl Evaluable for Atom {
@@ -49,8 +67,13 @@ impl Evaluable for IfElse {
 }
 
 impl Evaluable for Application {
-    fn evaluate(self, _env: &mut Env) -> Result<Expression> {
-        todo!()
+    fn evaluate(self, env: &mut Env) -> Result<Expression> {
+        match self.name {
+            FnIdentifier::BuiltIn(built_in) => {
+                built_in.apply(self.arguments, env)
+            }
+            FnIdentifier::Other(_) => todo!(),
+        }
     }
 }
 
@@ -73,8 +96,38 @@ impl Evaluable for Expression {
 mod tests {
     use super::{Env, Evaluable};
     use crate::{
-        expression::Atom, parse_expression, Expression,
+        expression::elements::Atom, parse_expression, Expression,
     };
+
+    #[test]
+    fn evaluates_addition_correctly() {
+        let expr = parse_expression("(+)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(0.0))
+        );
+
+        let expr = parse_expression("(+ 3)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(3.0))
+        );
+
+        let expr = parse_expression("(+ 3 2)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(5.0))
+        );
+
+        let expr =
+            parse_expression("(+ (+ 3 5) (+ (if true 5 2) 2))")
+                .unwrap()
+                .1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(15.0))
+        );
+    }
 
     #[test]
     fn evaluates_if_expressions() {

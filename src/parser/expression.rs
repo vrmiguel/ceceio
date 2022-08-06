@@ -11,7 +11,8 @@ use nom::{
 
 use crate::{
     expression::{
-        Application, Expression, FnIdentifier, If, IfElse,
+        elements::{Application, FnIdentifier, If, IfElse},
+        Expression,
     },
     parse_atom,
     parser::atom::parse_fn_identifier,
@@ -104,7 +105,8 @@ mod tests {
     use super::{parse_application, Application};
     use crate::{
         expression::{
-            Atom, BuiltIn, Expression, FnIdentifier, If, IfElse,
+            elements::{Atom, FnIdentifier, If, IfElse},
+            BuiltIn, Expression,
         },
         parse_expression,
         parser::expression::parse_if,

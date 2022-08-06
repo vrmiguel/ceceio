@@ -1,5 +1,6 @@
 mod ast;
 mod cheap_clone;
+mod check;
 mod error;
 mod evaluator;
 mod expression;
@@ -8,7 +9,9 @@ mod parser;
 mod small_string;
 
 pub use cheap_clone::CheapClone;
+pub use check::Typed;
 pub use error::{Error, Result};
-pub use expression::Expression;
+pub use evaluator::{Env, Evaluable};
+pub use expression::{elements::Atom, BuiltIn, Expression};
 pub use parser::{parse_atom, parse_expression, IResult};
 pub use small_string::SmallString;

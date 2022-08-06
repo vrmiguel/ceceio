@@ -8,4 +8,11 @@ pub enum Error {
     // not a collection")] CantPopFromValue,
     #[error("Tried to pop from an empty collection")]
     EmptyCollection,
+    #[error(
+        "Type error: Expected {expected}, received {received}"
+    )]
+    TypeMismatch {
+        expected: &'static str,
+        received: &'static str,
+    },
 }

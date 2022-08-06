@@ -11,7 +11,10 @@ use nom::{
 
 use super::IResult;
 use crate::{
-    expression::{Atom, BuiltIn, FnIdentifier},
+    expression::{
+        elements::{Atom, FnIdentifier},
+        BuiltIn,
+    },
     SmallString,
 };
 
@@ -98,7 +101,7 @@ fn parse_double(input: &str) -> IResult<f64> {
 mod tests {
     use super::parse_double;
     use crate::{
-        expression::{Atom, BuiltIn},
+        expression::{elements::Atom, BuiltIn},
         parser::atom::{
             parse_atom, parse_boolean, parse_builtin,
             parse_keyword, parse_operator,
