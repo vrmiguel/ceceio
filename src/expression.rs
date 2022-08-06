@@ -70,4 +70,5 @@ pub enum Atom {
     // TODO: remove this from Atom since BuiltIn is
     // used in FnIdentifier?
     BuiltIn(BuiltIn),
+    Nil,
 }

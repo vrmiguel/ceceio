@@ -1,6 +1,7 @@
 mod ast;
 mod cheap_clone;
 mod error;
+mod evaluator;
 mod expression;
 mod interner;
 mod parser;
