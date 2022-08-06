@@ -26,6 +26,7 @@ impl fmt::Display for SmallString {
     }
 }
 
+#[allow(clippy::derive_hash_xor_eq)]
 impl Hash for SmallString {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.as_str().hash(state);

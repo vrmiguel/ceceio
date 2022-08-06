@@ -13,10 +13,30 @@ pub struct Application {
     pub arguments: Vec<Expression>,
 }
 
+/// Represents an `if` predicate
+#[derive(Debug, PartialEq, Clone)]
+pub struct If {
+    /// `if condition`
+    condition: Expression,
+    /// Then do this
+    do_this: Expression,
+}
+
+/// Represents an `if` predicate
+/// with an `else` clause
+#[derive(Debug, PartialEq, Clone)]
+pub struct IfElse {
+    condition: Expression,
+    if_true: Expression,
+    if_false: Expression,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
     Atom(Atom),
     Application(Application),
+    If(Box<If>),
+    Else(Box<IfElse>),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

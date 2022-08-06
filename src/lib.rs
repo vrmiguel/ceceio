@@ -8,5 +8,6 @@ mod small_string;
 
 pub use cheap_clone::CheapClone;
 pub use error::{Error, Result};
-pub use parser::{parse_atom, IResult};
+pub use expression::Expression;
+pub use parser::{parse_atom, parse_expression, IResult};
 pub use small_string::SmallString;

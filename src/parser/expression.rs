@@ -1,14 +1,10 @@
 use nom::{
     branch::alt,
-    bytes::complete::take_till,
-    character::{
-        complete::{char, multispace0},
-        streaming::alphanumeric1,
-    },
+    character::complete::{char, multispace0},
     combinator::cut,
     error::{context, VerboseError},
     multi::many0,
-    sequence::{delimited, preceded, tuple},
+    sequence::{delimited, preceded},
     Parser,
 };
 
