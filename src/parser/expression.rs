@@ -13,7 +13,7 @@ use nom::{
 };
 
 use crate::{
-    expression::{Expression, FnIdentifier},
+    expression::{Application, Expression, FnIdentifier},
     parse_atom,
     parser::atom::parse_fn_identifier,
     IResult, SmallString,
@@ -21,12 +21,6 @@ use crate::{
 
 pub fn parse_expression(input: &str) -> IResult<Expression> {
     alt((parse_atom.map(Expression::Atom),))(input)
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Application {
-    pub name: FnIdentifier,
-    pub arguments: Vec<Expression>,
 }
 
 // Based on https://github.com/Geal/nom/blob/761ab0a24fccb4c560367b583b608fbae5f31647/examples/s_expression.rs#L155
@@ -46,7 +40,6 @@ where
     )
 }
 
-/// TODO: change to also support builtins
 fn parse_application(input: &str) -> IResult<Application> {
     #[inline]
     fn parse_name_and_args(

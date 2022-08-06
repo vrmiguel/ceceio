@@ -19,9 +19,9 @@ pub fn parse_atom(input: &str) -> IResult<Atom> {
     context(
         "atom",
         alt((
-            parse_builtin.map(Atom::BuiltIn),
             parse_double.map(Atom::Number),
             parse_boolean.map(Atom::Boolean),
+            parse_builtin.map(Atom::BuiltIn),
             parse_keyword.map(Atom::Keyword),
         )),
     )(input)
@@ -32,8 +32,6 @@ fn parse_keyword(input: &str) -> IResult<SmallString> {
         "keyword",
         preceded(tag(":"), cut(parse_identifier)),
     )(input)
-
-    // Ok((rest, SmallString::new(keyword)))
 }
 
 fn parse_identifier(input: &str) -> IResult<SmallString> {
