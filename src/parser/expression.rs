@@ -1,15 +1,18 @@
 use nom::{
     branch::alt,
-    character::complete::{char, multispace0},
-    combinator::cut,
+    bytes::complete::tag,
+    character::complete::{char, multispace0, multispace1},
+    combinator::{cut, opt},
     error::{context, VerboseError},
     multi::many0,
-    sequence::{delimited, preceded},
+    sequence::{delimited, preceded, terminated, tuple},
     Parser,
 };
 
 use crate::{
-    expression::{Application, Expression, FnIdentifier},
+    expression::{
+        Application, Expression, FnIdentifier, If, IfElse,
+    },
     parse_atom,
     parser::atom::parse_fn_identifier,
     IResult,
@@ -20,9 +23,42 @@ pub fn parse_expression(input: &str) -> IResult<Expression> {
         multispace0,
         alt((
             parse_atom.map(Expression::Atom),
+            parse_if,
             parse_application.map(Expression::Application),
         )),
     )(input)
+}
+
+fn parse_if(input: &str) -> IResult<Expression> {
+    fn parse_if_inner(input: &str) -> IResult<Expression> {
+        let (rest, (condition, if_true, if_false)) =
+            preceded(
+                terminated(tag("if"), multispace1),
+                cut(tuple((
+                    parse_expression,
+                    parse_expression,
+                    opt(parse_expression),
+                ))),
+            )(input)?;
+
+        let expr = match if_false {
+            Some(if_false) => {
+                Expression::IfElse(Box::new(IfElse {
+                    condition,
+                    if_true,
+                    if_false,
+                }))
+            }
+            None => Expression::If(Box::new(If {
+                condition,
+                do_this: if_true,
+            })),
+        };
+
+        Ok((rest, expr))
+    }
+
+    parse_parenthesis_enclosed(parse_if_inner)(input)
 }
 
 // Based on https://github.com/Geal/nom/blob/761ab0a24fccb4c560367b583b608fbae5f31647/examples/s_expression.rs#L155
@@ -67,7 +103,11 @@ fn parse_application(input: &str) -> IResult<Application> {
 mod tests {
     use super::{parse_application, Application};
     use crate::{
-        expression::{Atom, BuiltIn, Expression, FnIdentifier},
+        expression::{
+            Atom, BuiltIn, Expression, FnIdentifier, If, IfElse,
+        },
+        parse_expression,
+        parser::expression::parse_if,
         SmallString,
     };
 
@@ -126,5 +166,87 @@ mod tests {
                 }
             ))
         );
+    }
+
+    #[test]
+    fn parses_if_statements() {
+        assert_eq!(
+            parse_if("(if true 2)"),
+            Ok((
+                "",
+                Expression::If(Box::new(If {
+                    condition: Expression::Atom(Atom::Boolean(
+                        true
+                    )),
+                    do_this: Expression::Atom(Atom::Number(2.0)),
+                }))
+            ))
+        );
+
+        assert_eq!(
+            parse_if("(if true 2 3)"),
+            Ok((
+                "",
+                Expression::IfElse(Box::new(IfElse {
+                    condition: Expression::Atom(Atom::Boolean(
+                        true
+                    )),
+                    if_true: Expression::Atom(Atom::Number(2.0)),
+                    if_false: Expression::Atom(Atom::Number(
+                        3.0
+                    ))
+                }))
+            ))
+        );
+
+        assert!(parse_if(
+            "(if (= (div 3 2) 0) 2 (= (div 5 2) 0))"
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn parses_expressions() {
+        assert_eq!(
+            parse_expression("5"),
+            Ok(("", Expression::Atom(Atom::Number(5.0))))
+        );
+
+        assert_eq!(
+            parse_expression("(add 2 3)"),
+            Ok((
+                "",
+                Expression::Application(Application {
+                    name: FnIdentifier::Other(SmallString::new(
+                        "add"
+                    )),
+                    arguments: vec![
+                        Expression::Atom(Atom::Number(2.0)),
+                        Expression::Atom(Atom::Number(3.0))
+                    ]
+                })
+            ))
+        );
+
+        assert_eq!(
+            parse_expression("(if false 5 4)"),
+            Ok((
+                "",
+                Expression::IfElse(Box::new(IfElse {
+                    condition: Expression::Atom(Atom::Boolean(
+                        false
+                    )),
+                    if_true: Expression::Atom(Atom::Number(5.0)),
+                    if_false: Expression::Atom(Atom::Number(
+                        4.0
+                    ))
+                }))
+            ))
+        );
+
+        assert!(parse_expression(
+            "(add (if true 2 3) (- (* 3 4 (/ 3 4)) 5))"
+        )
+        .is_ok());
     }
 }

@@ -17,18 +17,18 @@ pub struct Application {
 #[derive(Debug, PartialEq, Clone)]
 pub struct If {
     /// `if condition`
-    condition: Expression,
+    pub condition: Expression,
     /// Then do this
-    do_this: Expression,
+    pub do_this: Expression,
 }
 
 /// Represents an `if` predicate
 /// with an `else` clause
 #[derive(Debug, PartialEq, Clone)]
 pub struct IfElse {
-    condition: Expression,
-    if_true: Expression,
-    if_false: Expression,
+    pub condition: Expression,
+    pub if_true: Expression,
+    pub if_false: Expression,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -36,7 +36,7 @@ pub enum Expression {
     Atom(Atom),
     Application(Application),
     If(Box<If>),
-    Else(Box<IfElse>),
+    IfElse(Box<IfElse>),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
