@@ -9,7 +9,7 @@ mod parser;
 mod small_string;
 
 pub use cheap_clone::CheapClone;
-pub use check::Typed;
+pub use check::{ensure_arity, Typed};
 pub use error::{Error, Result};
 pub use evaluator::{Env, Evaluable};
 pub use expression::{elements::Atom, BuiltIn, Expression};

@@ -1,5 +1,8 @@
+use std::ops::Not;
+
 use crate::{
-    Atom, Env, Error, Evaluable, Expression, Result, Typed,
+    ensure_arity, Atom, Env, Error, Evaluable, Expression,
+    Result, Typed,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -31,8 +34,28 @@ impl BuiltIn {
             BuiltIn::Times => todo!(),
             BuiltIn::Divide => todo!(),
             BuiltIn::Equal => todo!(),
-            BuiltIn::Not => todo!(),
+            BuiltIn::Not => Self::not(args, env),
         }
+    }
+
+    fn not(
+        mut args: Vec<Expression>,
+        env: &mut Env,
+    ) -> Result<Expression> {
+        ensure_arity(1, args.len() as _)?;
+
+        // Won't fail because we've checked the arity above
+        let expr = args.pop().unwrap();
+        let expr = expr.evaluate(env)?;
+
+        let boolean = expr.as_bool().ok_or_else(|| {
+            Error::TypeMismatch {
+                expected: "bool",
+                received: expr.rough_type(),
+            }
+        })?;
+
+        Ok(Expression::Atom(Atom::Boolean(boolean.not())))
     }
 
     fn sum(

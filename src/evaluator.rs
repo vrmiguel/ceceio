@@ -96,7 +96,8 @@ impl Evaluable for Expression {
 mod tests {
     use super::{Env, Evaluable};
     use crate::{
-        expression::elements::Atom, parse_expression, Expression,
+        expression::elements::Atom, parse_expression, Error,
+        Expression,
     };
 
     #[test]
@@ -143,6 +144,48 @@ mod tests {
         assert_eq!(
             expr.evaluate(&mut Env {}).unwrap(),
             Expression::Atom(Atom::Number(5.0))
+        );
+    }
+
+    #[test]
+    fn evaluates_not_expressions() {
+        let expr = parse_expression("(not true)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Boolean(false))
+        );
+
+        let expr = parse_expression("(not false)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Boolean(true))
+        );
+
+        let expr = parse_expression("(not (not (not false)))")
+            .unwrap()
+            .1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Boolean(true))
+        );
+
+        let expr = parse_expression("(not)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap_err(),
+            Error::ArityMismatch {
+                expected: 1,
+                received: 0
+            }
+        );
+
+        let expr =
+            parse_expression("(not false true)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap_err(),
+            Error::ArityMismatch {
+                expected: 1,
+                received: 2
+            }
         );
     }
 }

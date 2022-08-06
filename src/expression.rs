@@ -21,4 +21,12 @@ impl Expression {
             None
         }
     }
+
+    pub fn as_bool(&self) -> Option<bool> {
+        if let Expression::Atom(Atom::Boolean(boolean)) = self {
+            Some(*boolean)
+        } else {
+            None
+        }
+    }
 }
