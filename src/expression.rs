@@ -1,8 +1,14 @@
 use crate::{CheapClone, SmallString};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq)]
+pub enum FnIdentifier {
+    BuiltIn(BuiltIn),
+    Other(SmallString),
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
-    Constant(Atom),
+    Atom(Atom),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

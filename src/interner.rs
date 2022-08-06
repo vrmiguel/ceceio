@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::collections::HashSet;
 
 use crate::{
@@ -10,8 +12,6 @@ pub struct StringInterner {
 
 impl StringInterner {
     pub fn with_capacity(capacity: usize) -> Self {
-        // HashSet::with_capacity_and_hasher(capacity,
-        // fxhasher::)
         Self {
             inner: HashSet::with_capacity(capacity),
         }

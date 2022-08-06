@@ -11,7 +11,7 @@ use nom::{
 
 use super::IResult;
 use crate::{
-    expression::{Atom, BuiltIn},
+    expression::{Atom, BuiltIn, FnIdentifier},
     SmallString,
 };
 
@@ -28,12 +28,18 @@ pub fn parse_atom(input: &str) -> IResult<Atom> {
 }
 
 fn parse_keyword(input: &str) -> IResult<SmallString> {
-    let (rest, keyword) = context(
+    context(
         "keyword",
-        preceded(tag(":"), cut(alpha1)),
-    )(input)?;
+        preceded(tag(":"), cut(parse_identifier)),
+    )(input)
 
-    Ok((rest, SmallString::new(keyword)))
+    // Ok((rest, SmallString::new(keyword)))
+}
+
+fn parse_identifier(input: &str) -> IResult<SmallString> {
+    let (rest, ident) = alpha1(input)?;
+
+    Ok((rest, SmallString::new(ident)))
 }
 
 #[inline(always)]
@@ -41,6 +47,18 @@ fn parse_builtin(input: &str) -> IResult<BuiltIn> {
     context(
         "builtin",
         alt((parse_operator, value(BuiltIn::Not, tag("not")))),
+    )(input)
+}
+
+pub fn parse_fn_identifier(
+    input: &str,
+) -> IResult<FnIdentifier> {
+    context(
+        "identifier",
+        alt((
+            parse_builtin.map(FnIdentifier::BuiltIn),
+            parse_identifier.map(FnIdentifier::Other),
+        )),
     )(input)
 }
 
