@@ -122,7 +122,7 @@ mod tests {
             parse_and_eval("(and 2 2)").unwrap_err(),
             Error::TypeMismatch {
                 expected: "boolean",
-                received: "Number"
+                received: "number"
             }
         );
 

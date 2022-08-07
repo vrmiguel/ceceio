@@ -51,6 +51,7 @@ fn parse_builtin(input: &str) -> IResult<BuiltIn> {
             parse_operator,
             value(BuiltIn::Not, tag("not")),
             value(BuiltIn::And, tag("and")),
+            value(BuiltIn::Or, tag("or")),
         )),
     )(input)
 }
@@ -198,6 +199,11 @@ mod tests {
         assert_eq!(
             parse_builtin("and=+-/not"),
             Ok(("=+-/not", BuiltIn::And))
+        );
+
+        assert_eq!(
+            parse_builtin("or=+and-/not"),
+            Ok(("=+and-/not", BuiltIn::Or))
         );
 
         assert!(parse_double("a 1.2").is_err());

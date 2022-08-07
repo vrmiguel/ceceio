@@ -1,4 +1,8 @@
-use crate::{BuiltIn, CheapClone, Expression, SmallString};
+use std::fmt::Display;
+
+use crate::{
+    BuiltIn, CheapClone, Expression, SmallString, Typed,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum FnIdentifier {
@@ -42,8 +46,48 @@ pub enum Atom {
     Keyword(SmallString),
     /// `true` or `false`
     Boolean(bool),
-    // TODO: remove this from Atom since BuiltIn is
-    // used in FnIdentifier?
     BuiltIn(BuiltIn),
     Nil,
+}
+
+impl Display for Atom {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        match self {
+            Atom::Number(num) => write!(f, "{num}"),
+            Atom::Keyword(keyword) => write!(f, ":{keyword}"),
+            Atom::Boolean(boolean) => write!(f, "{boolean}"),
+            Atom::BuiltIn(built_in) => {
+                f.write_str(built_in.rough_type())
+            }
+            Atom::Nil => f.write_str("nil"),
+        }
+    }
+}
+
+impl Display for FnIdentifier {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        match self {
+            FnIdentifier::BuiltIn(built_in) => {
+                f.write_str(built_in.rough_type())
+            }
+            FnIdentifier::Other(identifier) => {
+                f.write_str(identifier)
+            }
+        }
+    }
+}
+
+impl Display for Application {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        write!(f, "{}", self.name)
+    }
 }

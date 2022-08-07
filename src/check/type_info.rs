@@ -25,6 +25,7 @@ impl Typed for BuiltIn {
             BuiltIn::Equal => "=",
             BuiltIn::Not => "not",
             BuiltIn::And => "and",
+            BuiltIn::Or => "or",
         }
     }
 }
@@ -32,8 +33,8 @@ impl Typed for BuiltIn {
 impl Typed for Atom {
     fn rough_type(&self) -> &'static str {
         match self {
-            Atom::Number(_) => "Number",
-            Atom::Keyword(_) => "Keyword",
+            Atom::Number(_) => "number",
+            Atom::Keyword(_) => "keyword",
             Atom::Boolean(boolean) => {
                 if *boolean {
                     "true"

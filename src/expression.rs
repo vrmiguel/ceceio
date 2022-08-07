@@ -1,3 +1,5 @@
+use std::fmt;
+
 pub mod builtin;
 pub mod elements;
 
@@ -47,5 +49,17 @@ impl From<bool> for Expression {
 impl From<f64> for Expression {
     fn from(number: f64) -> Self {
         Expression::Atom(Atom::Number(number))
+    }
+}
+
+impl fmt::Display for Expression {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Expression::Atom(atom) => write!(f, "{atom}"),
+            Expression::Application(app) => write!(f, "{app}"),
+            Expression::If(_) | Expression::IfElse(_) => {
+                f.write_str("if")
+            }
+        }
     }
 }

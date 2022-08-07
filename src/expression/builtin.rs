@@ -22,6 +22,8 @@ pub enum BuiltIn {
     Not,
     /// "and"
     And,
+    /// "or"
+    Or,
 }
 
 impl BuiltIn {
@@ -46,6 +48,7 @@ impl BuiltIn {
             BuiltIn::Equal => Self::equals(args, env),
             BuiltIn::Not => Self::not(args, env),
             BuiltIn::And => Self::and(args, env),
+            BuiltIn::Or => Self::or(args, env),
         }
     }
 
@@ -81,6 +84,26 @@ impl BuiltIn {
         }
 
         Ok(true.into())
+    }
+
+    fn or(
+        args: Vec<Expression>,
+        env: &mut Env,
+    ) -> Result<Expression> {
+        ensure_minimum_arity(2, args.len() as _)?;
+        let expressions =
+            args.into_iter().map(|expr| expr.evaluate(env));
+
+        for expression in expressions {
+            let expression = expression?;
+            let condition = expression.as_bool()?;
+
+            if condition {
+                return Ok(true.into());
+            }
+        }
+
+        Ok(false.into())
     }
 
     fn equals(
