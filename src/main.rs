@@ -12,11 +12,11 @@ fn main() {
 
     let expr =
         parse_expression("(if false 2 (if true 5))").unwrap().1;
+    dbg!(&expr);
 
-    assert_eq!(
-        expr.evaluate(&mut Env {}).unwrap(),
-        Expression::Atom(Atom::Number(5.0))
-    );
+    let expr =
+        parse_expression("(+ (* 2 3) (- 5 6 7))").unwrap().1;
+    dbg!(&expr);
 
     let expr = parse_expression("(+ 2 3 4 +)").unwrap().1;
     println!("{}", expr.evaluate(&mut Env {}).unwrap_err());

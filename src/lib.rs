@@ -1,4 +1,3 @@
-mod ast;
 mod cheap_clone;
 mod check;
 mod error;
@@ -9,7 +8,7 @@ mod parser;
 mod small_string;
 
 pub use cheap_clone::CheapClone;
-pub use check::{ensure_arity, Typed};
+pub use check::{ensure_exact_arity, Typed};
 pub use error::{Error, Result};
 pub use evaluator::{Env, Evaluable};
 pub use expression::{elements::Atom, BuiltIn, Expression};

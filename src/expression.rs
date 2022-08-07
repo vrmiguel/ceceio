@@ -37,3 +37,15 @@ impl Expression {
         }
     }
 }
+
+impl From<bool> for Expression {
+    fn from(cond: bool) -> Self {
+        Expression::Atom(Atom::Boolean(cond))
+    }
+}
+
+impl From<f64> for Expression {
+    fn from(number: f64) -> Self {
+        Expression::Atom(Atom::Number(number))
+    }
+}

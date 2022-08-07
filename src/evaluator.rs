@@ -1,9 +1,6 @@
 use crate::{
-    expression::{
-        elements::{
-            Application, Atom, FnIdentifier, If, IfElse,
-        },
-        BuiltIn,
+    expression::elements::{
+        Application, Atom, FnIdentifier, If, IfElse,
     },
     Expression, Result,
 };
@@ -16,19 +13,6 @@ pub struct Env {}
 
 pub trait Evaluable {
     fn evaluate(self, env: &mut Env) -> Result<Expression>;
-}
-
-impl Evaluable for BuiltIn {
-    fn evaluate(self, _: &mut Env) -> Result<Expression> {
-        match self {
-            BuiltIn::Plus => todo!(),
-            BuiltIn::Minus => todo!(),
-            BuiltIn::Times => todo!(),
-            BuiltIn::Divide => todo!(),
-            BuiltIn::Equal => todo!(),
-            BuiltIn::Not => todo!(),
-        }
-    }
 }
 
 impl Evaluable for Atom {
@@ -97,36 +81,46 @@ mod tests {
     use super::{Env, Evaluable};
     use crate::{
         expression::elements::Atom, parse_expression, Error,
-        Expression,
+        Expression, Result,
     };
+
+    // TODO: finish converting test cases to use `parse_and_eval`
+    fn parse_and_eval(input: &str) -> Result<Expression> {
+        let expr = parse_expression(input).unwrap().1;
+        expr.evaluate(&mut Env {})
+    }
+
+    #[test]
+    fn evaluates_equality_correctly() {
+        // Must fail arity check
+        assert!(parse_and_eval("(=)").is_err());
+        assert!(parse_and_eval("(= 2)").is_err());
+
+        assert_eq!(parse_and_eval("(= 2 2)").unwrap(), true.into());
+        assert_eq!(parse_and_eval("(= 2 3)").unwrap(), false.into());
+        assert_eq!(parse_and_eval("(= (+ 1 3) (+ 2 2) (- 6 2))").unwrap(), true.into());
+    }
 
     #[test]
     fn evaluates_addition_correctly() {
-        let expr = parse_expression("(+)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
-            Expression::Atom(Atom::Number(0.0))
+            parse_and_eval("(+)").unwrap(),
+            0.0.into()
         );
 
-        let expr = parse_expression("(+ 3)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
-            Expression::Atom(Atom::Number(3.0))
+            parse_and_eval("(+ 3)").unwrap(),
+            3.0.into()
+        );
+        
+        assert_eq!(
+            parse_and_eval("(+ 5)").unwrap(),
+            5.0.into()
         );
 
-        let expr = parse_expression("(+ 3 2)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
-            Expression::Atom(Atom::Number(5.0))
-        );
-
-        let expr =
-            parse_expression("(+ (+ 3 5) (+ (if true 5 2) 2))")
-                .unwrap()
-                .1;
-        assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
-            Expression::Atom(Atom::Number(15.0))
+            parse_and_eval("(+ (+ 3 5) (+ (if true 5 2) 2))").unwrap(),
+            15.0.into()
         );
     }
 
@@ -227,7 +221,7 @@ mod tests {
         let expr = parse_expression("(not)").unwrap().1;
         assert_eq!(
             expr.evaluate(&mut Env {}).unwrap_err(),
-            Error::ArityMismatch {
+            Error::ExactArityMismatch {
                 expected: 1,
                 received: 0
             }
@@ -237,7 +231,7 @@ mod tests {
             parse_expression("(not false true)").unwrap().1;
         assert_eq!(
             expr.evaluate(&mut Env {}).unwrap_err(),
-            Error::ArityMismatch {
+            Error::ExactArityMismatch {
                 expected: 1,
                 received: 2
             }

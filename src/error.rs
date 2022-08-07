@@ -18,5 +18,9 @@ pub enum Error {
     #[error(
         "Arity mismatch: expected {expected}, received {received}"
     )]
-    ArityMismatch { expected: u8, received: u8 },
+    ExactArityMismatch { expected: u8, received: u8 },
+    #[error(
+        "Arity mismatch: expected at least {at_least}, received {received}"
+    )]
+    MinimumArityMismatch { at_least: u8, received: u8 },
 }
