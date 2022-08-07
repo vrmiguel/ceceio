@@ -24,6 +24,7 @@ impl Typed for BuiltIn {
             BuiltIn::Divide => "/",
             BuiltIn::Equal => "=",
             BuiltIn::Not => "not",
+            BuiltIn::And => "and",
         }
     }
 }

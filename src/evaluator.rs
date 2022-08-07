@@ -96,30 +96,72 @@ mod tests {
         assert!(parse_and_eval("(=)").is_err());
         assert!(parse_and_eval("(= 2)").is_err());
 
-        assert_eq!(parse_and_eval("(= 2 2)").unwrap(), true.into());
-        assert_eq!(parse_and_eval("(= 2 3)").unwrap(), false.into());
-        assert_eq!(parse_and_eval("(= (+ 1 3) (+ 2 2) (- 6 2))").unwrap(), true.into());
+        assert_eq!(
+            parse_and_eval("(= 2 2)").unwrap(),
+            true.into()
+        );
+        assert_eq!(
+            parse_and_eval("(= 2 3)").unwrap(),
+            false.into()
+        );
+        assert_eq!(
+            parse_and_eval("(= (+ 1 3) (+ 2 2) (- 6 2))")
+                .unwrap(),
+            true.into()
+        );
+    }
+
+    #[test]
+    fn evaluates_and_operator_correctly() {
+        // Must fail arity check
+        assert!(parse_and_eval("(and)").is_err());
+        assert!(parse_and_eval("(and 2)").is_err());
+
+        // Must fail type check
+        assert_eq!(
+            parse_and_eval("(and 2 2)").unwrap_err(),
+            Error::TypeMismatch {
+                expected: "boolean",
+                received: "Number"
+            }
+        );
+
+        assert_eq!(
+            parse_and_eval("(and true true)").unwrap(),
+            true.into()
+        );
+        assert_eq!(
+            parse_and_eval("(and false true)").unwrap(),
+            false.into()
+        );
+        assert_eq!(parse_and_eval("(and true true true true true true true true false true)").unwrap(), false.into());
+        assert_eq!(
+            parse_and_eval(
+                "(and (= 2 2) (= 3 3) (= (= 2 5) (=7 8))))"
+            )
+            .unwrap(),
+            true.into()
+        );
+        assert_eq!(
+            parse_and_eval(
+                "(and (= 2 2) (= 2 3) (= (= 2 5) (=7 8))))"
+            )
+            .unwrap(),
+            false.into()
+        );
     }
 
     #[test]
     fn evaluates_addition_correctly() {
-        assert_eq!(
-            parse_and_eval("(+)").unwrap(),
-            0.0.into()
-        );
+        assert_eq!(parse_and_eval("(+)").unwrap(), 0.0.into());
+
+        assert_eq!(parse_and_eval("(+ 3)").unwrap(), 3.0.into());
+
+        assert_eq!(parse_and_eval("(+ 5)").unwrap(), 5.0.into());
 
         assert_eq!(
-            parse_and_eval("(+ 3)").unwrap(),
-            3.0.into()
-        );
-        
-        assert_eq!(
-            parse_and_eval("(+ 5)").unwrap(),
-            5.0.into()
-        );
-
-        assert_eq!(
-            parse_and_eval("(+ (+ 3 5) (+ (if true 5 2) 2))").unwrap(),
+            parse_and_eval("(+ (+ 3 5) (+ (if true 5 2) 2))")
+                .unwrap(),
             15.0.into()
         );
     }

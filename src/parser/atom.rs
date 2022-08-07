@@ -47,7 +47,11 @@ fn parse_identifier(input: &str) -> IResult<SmallString> {
 fn parse_builtin(input: &str) -> IResult<BuiltIn> {
     context(
         "builtin",
-        alt((parse_operator, value(BuiltIn::Not, tag("not")))),
+        alt((
+            parse_operator,
+            value(BuiltIn::Not, tag("not")),
+            value(BuiltIn::And, tag("and")),
+        )),
     )(input)
 }
 
@@ -190,6 +194,10 @@ mod tests {
         assert_eq!(
             parse_builtin("not=+-/"),
             Ok(("=+-/", BuiltIn::Not))
+        );
+        assert_eq!(
+            parse_builtin("and=+-/not"),
+            Ok(("=+-/not", BuiltIn::And))
         );
 
         assert!(parse_double("a 1.2").is_err());
