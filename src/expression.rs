@@ -4,6 +4,7 @@ pub mod elements;
 pub use builtin::BuiltIn;
 
 use self::elements::{Application, Atom, If, IfElse};
+use crate::{Error, Result, Typed};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
@@ -14,19 +15,25 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub fn as_number(&self) -> Option<f64> {
+    pub fn as_number(&self) -> Result<f64> {
         if let Expression::Atom(Atom::Number(num)) = self {
-            Some(*num)
+            Ok(*num)
         } else {
-            None
+            Err(Error::TypeMismatch {
+                expected: "number",
+                received: self.rough_type(),
+            })
         }
     }
 
-    pub fn as_bool(&self) -> Option<bool> {
+    pub fn as_bool(&self) -> Result<bool> {
         if let Expression::Atom(Atom::Boolean(boolean)) = self {
-            Some(*boolean)
+            Ok(*boolean)
         } else {
-            None
+            Err(Error::TypeMismatch {
+                expected: "boolean",
+                received: self.rough_type(),
+            })
         }
     }
 }

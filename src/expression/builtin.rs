@@ -29,10 +29,18 @@ impl BuiltIn {
         env: &mut Env,
     ) -> Result<Expression> {
         match self {
-            BuiltIn::Plus => Self::sum(args, env),
-            BuiltIn::Minus => todo!(),
-            BuiltIn::Times => todo!(),
-            BuiltIn::Divide => todo!(),
+            BuiltIn::Plus => {
+                Self::acc_numeric(|x, y| x + y, args, env)
+            }
+            BuiltIn::Minus => {
+                Self::acc_numeric(|x, y| x - y, args, env)
+            }
+            BuiltIn::Times => {
+                Self::acc_numeric(|x, y| x * y, args, env)
+            }
+            BuiltIn::Divide => {
+                Self::acc_numeric(|x, y| x / y, args, env)
+            }
             BuiltIn::Equal => todo!(),
             BuiltIn::Not => Self::not(args, env),
         }
@@ -46,36 +54,31 @@ impl BuiltIn {
 
         // Won't fail because we've checked the arity above
         let expr = args.pop().unwrap();
-        let expr = expr.evaluate(env)?;
-
-        let boolean = expr.as_bool().ok_or_else(|| {
-            Error::TypeMismatch {
-                expected: "bool",
-                received: expr.rough_type(),
-            }
-        })?;
+        let boolean = expr.evaluate(env)?.as_bool()?;
 
         Ok(Expression::Atom(Atom::Boolean(boolean.not())))
     }
 
-    fn sum(
+    fn acc_numeric(
+        func: impl Fn(f64, f64) -> f64,
         args: Vec<Expression>,
         env: &mut Env,
     ) -> Result<Expression> {
-        let mut acc = 0.0;
+        let mut expressions =
+            args.into_iter().map(|expr| expr.evaluate(env));
 
-        for expression in
-            args.into_iter().map(|expr| expr.evaluate(env))
-        {
+        let mut acc = match expressions.next() {
+            Some(maybe_atom) => maybe_atom?.as_number()?,
+            None => {
+                return Ok(Expression::Atom(Atom::Number(0.0)))
+            }
+        };
+
+        for expression in expressions {
             let expression = expression?;
-            let number =
-                expression.as_number().ok_or_else(|| {
-                    Error::TypeMismatch {
-                        expected: "number",
-                        received: expression.rough_type(),
-                    }
-                })?;
-            acc += number;
+            let number = expression.as_number()?;
+
+            acc = func(acc, number)
         }
 
         Ok(Expression::Atom(Atom::Number(acc)))

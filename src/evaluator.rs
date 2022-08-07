@@ -131,6 +131,61 @@ mod tests {
     }
 
     #[test]
+    fn evaluates_multiplication_correctly() {
+        let expr = parse_expression("(*)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(0.0))
+        );
+
+        let expr = parse_expression("(* 3)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(3.0))
+        );
+
+        let expr = parse_expression("(* 3 2)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(6.0))
+        );
+
+        let expr = parse_expression("(* 3 2 1)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(6.0))
+        );
+
+        let expr = parse_expression("(* 3 2 1 0)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(0.0))
+        );
+    }
+
+    #[test]
+    fn evaluates_subtraction_correctly() {
+        let expr = parse_expression("(-)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(0.0))
+        );
+
+        let expr = parse_expression("(- 3)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(-3.0))
+        );
+
+        // FIXME: this is wrong
+        let expr = parse_expression("(- 3 2)").unwrap().1;
+        assert_eq!(
+            expr.evaluate(&mut Env {}).unwrap(),
+            Expression::Atom(Atom::Number(1.0))
+        );
+    }
+
+    #[test]
     fn evaluates_if_expressions() {
         let expr = parse_expression("(if true 2)").unwrap().1;
         assert_eq!(
