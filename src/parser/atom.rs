@@ -40,7 +40,7 @@ fn parse_symbol(input: &str) -> IResult<&str> {
     )(input)
 }
 
-fn parse_identifier(input: &str) -> IResult<&str> {
+pub fn parse_identifier(input: &str) -> IResult<&str> {
     let (rest, identifier) = recognize(pair(
         // Ensure that the identifier doesn't start with a
         // digit

@@ -17,6 +17,14 @@ pub struct Application {
     pub arguments: Vec<Expression>,
 }
 
+/// Represents the binding of an
+/// identifier to an expression
+#[derive(Debug, PartialEq, Clone)]
+pub struct Binding {
+    pub identifier: SmallString,
+    pub expression: Expression,
+}
+
 /// Represents an `if` predicate
 #[derive(Debug, PartialEq, Clone)]
 pub struct If {
@@ -92,6 +100,19 @@ impl Display for Application {
         &self,
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
-        write!(f, "{}", self.name)
+        write!(f, "<function {}> ", self.name)
+    }
+}
+
+impl Display for Binding {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        write!(
+            f,
+            "(def {} ({}))",
+            self.identifier, self.expression
+        )
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     expression::elements::{
-        Application, Atom, FnIdentifier, If, IfElse,
+        Application, Atom, Binding, FnIdentifier, If, IfElse,
     },
     Expression, Result,
 };
@@ -61,9 +61,18 @@ impl Evaluable for Application {
     }
 }
 
+impl Evaluable for Binding {
+    fn evaluate(self, _env: &mut Env) -> Result<Expression> {
+        todo!()
+    }
+}
+
 impl Evaluable for Expression {
     fn evaluate(self, env: &mut Env) -> Result<Expression> {
         match self {
+            Expression::Binding(binding) => {
+                binding.evaluate(env)
+            }
             Expression::Atom(atom) => atom.evaluate(env),
             Expression::Application(application) => {
                 application.evaluate(env)
@@ -174,7 +183,13 @@ mod tests {
             parse_and_eval("(or false true)").unwrap(),
             true.into()
         );
-        assert_eq!(parse_and_eval("(or false false false false false true)").unwrap(), true.into());
+        assert_eq!(
+            parse_and_eval(
+                "(or false false false false false true)"
+            )
+            .unwrap(),
+            true.into()
+        );
         assert_eq!(
             parse_and_eval(
                 "(or (= 2 2) (= 3 3) (= (= 2 5) (=7 8))))"

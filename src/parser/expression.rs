@@ -11,12 +11,14 @@ use nom::{
 
 use crate::{
     expression::{
-        elements::{Application, FnIdentifier, If, IfElse},
+        elements::{
+            Application, Binding, FnIdentifier, If, IfElse,
+        },
         Expression,
     },
     parse_atom,
-    parser::atom::parse_fn_identifier,
-    IResult,
+    parser::atom::{parse_fn_identifier, parse_identifier},
+    IResult, SmallString,
 };
 
 pub fn parse_expression(input: &str) -> IResult<Expression> {
@@ -62,6 +64,27 @@ fn parse_if(input: &str) -> IResult<Expression> {
     parse_parenthesis_enclosed(parse_if_inner)(input)
 }
 
+fn parse_binding(input: &str) -> IResult<Binding> {
+    fn parse_identifier_and_expr(
+        input: &str,
+    ) -> IResult<(&str, Expression)> {
+        let (rest, _) = tag("def ")(input)?;
+        let (rest, identifier) = parse_identifier(rest)?;
+        let (rest, expression) = parse_expression(rest)?;
+
+        Ok((rest, (identifier, expression)))
+    }
+    let (rest, (identifier, expression)) =
+        parse_parenthesis_enclosed(parse_identifier_and_expr)(
+            input,
+        )?;
+    let binding = Binding {
+        identifier: SmallString::new(identifier),
+        expression,
+    };
+    Ok((rest, binding))
+}
+
 // Based on https://github.com/Geal/nom/blob/761ab0a24fccb4c560367b583b608fbae5f31647/examples/s_expression.rs#L155
 fn parse_parenthesis_enclosed<'a, T, F>(
     inner: F,
@@ -102,10 +125,12 @@ fn parse_application(input: &str) -> IResult<Application> {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_application, Application};
+    use super::{parse_application, parse_binding, Application};
     use crate::{
         expression::{
-            elements::{Atom, FnIdentifier, If, IfElse},
+            elements::{
+                Atom, Binding, FnIdentifier, If, IfElse,
+            },
             BuiltIn, Expression,
         },
         parse_expression,
@@ -205,6 +230,50 @@ mod tests {
             "(if (= (div 3 2) 0) 2 (= (div 5 2) 0))"
         )
         .is_ok());
+    }
+
+    #[test]
+    fn parses_bindings() {
+        assert_eq!(
+            parse_binding("(def two 2)"),
+            Ok((
+                "",
+                Binding {
+                    identifier: SmallString::new("two"),
+                    expression: Expression::Atom(Atom::Number(
+                        2.0
+                    ))
+                }
+            ))
+        );
+
+        assert_eq!(
+            parse_binding("(def five (+ 2 3))"),
+            Ok((
+                "",
+                Binding {
+                    identifier: SmallString::new("five"),
+                    expression: Expression::Application(
+                        Application {
+                            name: FnIdentifier::BuiltIn(
+                                BuiltIn::Plus
+                            ),
+                            arguments: vec![
+                                Expression::Atom(Atom::Number(
+                                    2.0
+                                )),
+                                Expression::Atom(Atom::Number(
+                                    3.0
+                                ))
+                            ]
+                        }
+                    )
+                }
+            ))
+        );
+
+        assert!(parse_binding("(def)").is_err());
+        assert!(parse_binding("(def x)").is_err());
     }
 
     #[test]

@@ -5,7 +5,7 @@ pub mod elements;
 
 pub use builtin::BuiltIn;
 
-use self::elements::{Application, Atom, If, IfElse};
+use self::elements::{Application, Atom, Binding, If, IfElse};
 use crate::{Error, Result, Typed};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -14,6 +14,7 @@ pub enum Expression {
     Application(Application),
     If(Box<If>),
     IfElse(Box<IfElse>),
+    Binding(Box<Binding>),
 }
 
 impl Expression {
@@ -57,6 +58,9 @@ impl fmt::Display for Expression {
         match self {
             Expression::Atom(atom) => write!(f, "{atom}"),
             Expression::Application(app) => write!(f, "{app}"),
+            Expression::Binding(binding) => {
+                write!(f, "{binding}")
+            }
             Expression::If(_) | Expression::IfElse(_) => {
                 f.write_str("if")
             }
