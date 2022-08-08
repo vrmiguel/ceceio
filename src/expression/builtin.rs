@@ -32,48 +32,59 @@ impl BuiltIn {
         args: Vec<Expression>,
         env: &mut Env,
     ) -> Result<Expression> {
+        let arity_received = args.len() as _;
+        let expressions =
+            args.into_iter().map(|expr| expr.evaluate(env));
+
         match self {
             BuiltIn::Plus => {
-                Self::acc_numeric(|x, y| x + y, 0., args, env)
+                Self::acc_numeric(|x, y| x + y, 0., expressions)
             }
             BuiltIn::Minus => {
-                Self::acc_numeric(|x, y| x - y, 0., args, env)
+                Self::acc_numeric(|x, y| x - y, 0., expressions)
             }
             BuiltIn::Times => {
-                Self::acc_numeric(|x, y| x * y, 1., args, env)
+                Self::acc_numeric(|x, y| x * y, 1., expressions)
             }
             BuiltIn::Divide => {
-                Self::acc_numeric(|x, y| x / y, 1., args, env)
+                Self::acc_numeric(|x, y| x / y, 1., expressions)
             }
-            BuiltIn::Equal => Self::equals(args, env),
-            BuiltIn::Not => Self::not(args, env),
-            BuiltIn::And => Self::and(args, env),
-            BuiltIn::Or => Self::or(args, env),
+            BuiltIn::Equal => {
+                ensure_minimum_arity(2, arity_received)?;
+                Self::equals(expressions)
+            }
+            BuiltIn::Not => {
+                // `not` can only be applied to one argument
+                ensure_exact_arity(1, arity_received)?;
+                Self::not(expressions)
+            }
+            BuiltIn::And => {
+                ensure_minimum_arity(2, arity_received)?;
+                Self::and(expressions)
+            }
+            BuiltIn::Or => {
+                ensure_minimum_arity(2, arity_received)?;
+                Self::or(expressions)
+            }
         }
     }
 
     fn not(
-        mut args: Vec<Expression>,
-        env: &mut Env,
+        mut expressions: impl Iterator<Item = Result<Expression>>,
     ) -> Result<Expression> {
-        // `not` can only be applied to one argument
-        ensure_exact_arity(1, args.len() as _)?;
+        // Won't fail because we've checked the arity in
+        // Self::apply
+        let expr = expressions.next().unwrap();
+        debug_assert!(expressions.next().is_none());
 
-        // Won't fail because we've checked the arity above
-        let expr = args.pop().unwrap();
-        let boolean = expr.evaluate(env)?.as_bool()?;
+        let boolean = expr?.as_bool()?;
 
         Ok(Expression::Atom(Atom::Boolean(boolean.not())))
     }
 
     fn and(
-        args: Vec<Expression>,
-        env: &mut Env,
+        expressions: impl Iterator<Item = Result<Expression>>,
     ) -> Result<Expression> {
-        ensure_minimum_arity(2, args.len() as _)?;
-        let expressions =
-            args.into_iter().map(|expr| expr.evaluate(env));
-
         for expression in expressions {
             let expression = expression?;
             let condition = expression.as_bool()?;
@@ -87,13 +98,8 @@ impl BuiltIn {
     }
 
     fn or(
-        args: Vec<Expression>,
-        env: &mut Env,
+        expressions: impl Iterator<Item = Result<Expression>>,
     ) -> Result<Expression> {
-        ensure_minimum_arity(2, args.len() as _)?;
-        let expressions =
-            args.into_iter().map(|expr| expr.evaluate(env));
-
         for expression in expressions {
             let expression = expression?;
             let condition = expression.as_bool()?;
@@ -107,15 +113,9 @@ impl BuiltIn {
     }
 
     fn equals(
-        args: Vec<Expression>,
-        env: &mut Env,
+        mut expressions: impl Iterator<Item = Result<Expression>>,
     ) -> Result<Expression> {
-        ensure_minimum_arity(2, args.len() as _)?;
-
-        let mut expressions =
-            args.into_iter().map(|expr| expr.evaluate(env));
-
-        // Safe unwrap: minimum arity was checked above
+        // Safe unwrap: minimum arity was checked in Self::apply
         let elem = expressions.next().unwrap()?;
 
         // Can't use iter::all due to error treatment
@@ -137,13 +137,9 @@ impl BuiltIn {
     fn acc_numeric(
         func: impl Fn(f64, f64) -> f64,
         identity: f64,
-        args: Vec<Expression>,
-        env: &mut Env,
+        expressions: impl Iterator<Item = Result<Expression>>,
     ) -> Result<Expression> {
-        let mut expressions = args
-            .into_iter()
-            .map(|expr| expr.evaluate(env))
-            .peekable();
+        let mut expressions = expressions.peekable();
 
         let mut acc = match expressions.next() {
             Some(maybe_atom) => {
