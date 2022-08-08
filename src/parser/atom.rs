@@ -25,20 +25,22 @@ pub fn parse_atom(input: &str) -> IResult<Atom> {
             parse_double.map(Atom::Number),
             parse_boolean.map(Atom::Boolean),
             parse_builtin.map(Atom::BuiltIn),
-            parse_symbol.map(Atom::Symbol),
-            parse_identifier.map(Atom::Identifier),
+            parse_symbol.map(SmallString::new).map(Atom::Symbol),
+            parse_identifier
+                .map(SmallString::new)
+                .map(Atom::Identifier),
         )),
     )(input)
 }
 
-fn parse_symbol(input: &str) -> IResult<SmallString> {
+fn parse_symbol(input: &str) -> IResult<&str> {
     context(
         "symbol",
         preceded(tag(":"), cut(parse_identifier)),
     )(input)
 }
 
-fn parse_identifier(input: &str) -> IResult<SmallString> {
+fn parse_identifier(input: &str) -> IResult<&str> {
     let (rest, identifier) = recognize(pair(
         // Ensure that the identifier doesn't start with a
         // digit
@@ -46,7 +48,7 @@ fn parse_identifier(input: &str) -> IResult<SmallString> {
         alphanumeric1,
     ))(input)?;
 
-    Ok((rest, SmallString::new(identifier)))
+    Ok((rest, identifier))
 }
 
 #[inline(always)]
@@ -69,7 +71,9 @@ pub fn parse_fn_identifier(
         "identifier",
         alt((
             parse_builtin.map(FnIdentifier::BuiltIn),
-            parse_identifier.map(FnIdentifier::Other),
+            parse_identifier
+                .map(SmallString::new)
+                .map(FnIdentifier::Other),
         )),
     )(input)
 }
@@ -115,7 +119,7 @@ mod tests {
         expression::{elements::Atom, BuiltIn},
         parser::atom::{
             parse_atom, parse_boolean, parse_builtin,
-            parse_operator, parse_symbol,
+            parse_identifier, parse_operator, parse_symbol,
         },
         SmallString,
     };
@@ -168,16 +172,14 @@ mod tests {
 
     #[test]
     fn parses_symbols() {
-        assert_eq!(
-            parse_symbol(":arg"),
-            Ok(("", SmallString::new("arg")))
-        );
+        assert_eq!(parse_symbol(":arg"), Ok(("", "arg")));
         assert_eq!(
             parse_symbol(":arg other"),
-            Ok((" other", SmallString::new("arg")))
+            Ok((" other", "arg"))
         );
 
         assert!(parse_symbol("arg1").is_err());
+        assert!(parse_symbol(":1arg").is_err());
     }
 
     #[test]
@@ -213,6 +215,22 @@ mod tests {
         );
 
         assert!(parse_double("a 1.2").is_err());
+    }
+
+    #[test]
+    fn parses_identifiers() {
+        assert_eq!(parse_identifier("arg"), Ok(("", "arg")));
+        assert_eq!(
+            parse_identifier("identifier other_identifier"),
+            Ok((" other_identifier", "identifier"))
+        );
+        assert_eq!(
+            parse_identifier("numeric123 123"),
+            Ok((" 123", "numeric123"))
+        );
+
+        assert!(parse_identifier(":arg1").is_err());
+        assert!(parse_identifier("1arg").is_err());
     }
 
     #[test]
