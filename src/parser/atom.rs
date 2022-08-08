@@ -1,11 +1,11 @@
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{alpha1, one_of},
-    combinator::{cut, value},
+    character::complete::{alphanumeric1, digit1, one_of},
+    combinator::{cut, not, recognize, value},
     error::context,
     number::complete::double,
-    sequence::preceded,
+    sequence::{pair, preceded},
     Parser,
 };
 
@@ -26,21 +26,27 @@ pub fn parse_atom(input: &str) -> IResult<Atom> {
             parse_boolean.map(Atom::Boolean),
             parse_builtin.map(Atom::BuiltIn),
             parse_symbol.map(Atom::Symbol),
+            parse_identifier.map(Atom::Identifier),
         )),
     )(input)
 }
 
 fn parse_symbol(input: &str) -> IResult<SmallString> {
     context(
-        "keyword",
+        "symbol",
         preceded(tag(":"), cut(parse_identifier)),
     )(input)
 }
 
 fn parse_identifier(input: &str) -> IResult<SmallString> {
-    let (rest, ident) = alpha1(input)?;
+    let (rest, identifier) = recognize(pair(
+        // Ensure that the identifier doesn't start with a
+        // digit
+        not(digit1),
+        alphanumeric1,
+    ))(input)?;
 
-    Ok((rest, SmallString::new(ident)))
+    Ok((rest, SmallString::new(identifier)))
 }
 
 #[inline(always)]

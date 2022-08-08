@@ -1,7 +1,8 @@
 use crate::{Atom, BuiltIn, Expression};
 
 pub trait Typed {
-    /// Displays roughly what type this expression or atom is
+    /// Displays roughly what type this expression or atom is,
+    /// for error message purposes
     fn rough_type(&self) -> &'static str;
 }
 
@@ -34,6 +35,7 @@ impl Typed for Atom {
     fn rough_type(&self) -> &'static str {
         match self {
             Atom::Number(_) => "number",
+            Atom::Identifier(_) => "identifier",
             Atom::Symbol(_) => "symbol",
             Atom::Boolean(boolean) => {
                 if *boolean {
