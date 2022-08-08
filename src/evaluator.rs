@@ -152,6 +152,53 @@ mod tests {
     }
 
     #[test]
+    fn evaluates_or_operator_correctly() {
+        // Must fail arity check
+        assert!(parse_and_eval("(or)").is_err());
+        assert!(parse_and_eval("(or 2)").is_err());
+
+        // Must fail type check
+        assert_eq!(
+            parse_and_eval("(or 2 true)").unwrap_err(),
+            Error::TypeMismatch {
+                expected: "boolean",
+                received: "number"
+            }
+        );
+
+        assert_eq!(
+            parse_and_eval("(or true true)").unwrap(),
+            true.into()
+        );
+        assert_eq!(
+            parse_and_eval("(or false true)").unwrap(),
+            true.into()
+        );
+        assert_eq!(parse_and_eval("(or false false false false false true)").unwrap(), true.into());
+        assert_eq!(
+            parse_and_eval(
+                "(or (= 2 2) (= 3 3) (= (= 2 5) (=7 8))))"
+            )
+            .unwrap(),
+            true.into()
+        );
+        assert_eq!(
+            parse_and_eval(
+                "(or (= 2 3) (= 3 3) (= (= 2 5) (=7 8))))"
+            )
+            .unwrap(),
+            true.into()
+        );
+        assert_eq!(
+            parse_and_eval(
+                "(or (= 2 3) (= 5 3) (= (= 2 5) (=7 8))))"
+            )
+            .unwrap(),
+            true.into()
+        );
+    }
+
+    #[test]
     fn evaluates_addition_correctly() {
         assert_eq!(parse_and_eval("(+)").unwrap(), 0.0.into());
 
