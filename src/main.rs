@@ -4,7 +4,7 @@ fn main() {
     let expr =
         parse_expression("(/ (* 2 3) (- 5 6 7))").unwrap().1;
 
-    match expr.evaluate(&mut Env {}) {
+    match expr.evaluate(&mut Env::default()) {
         Ok(evaluated) => println!("{evaluated}"),
         Err(err) => println!("Error: {err}"),
     }

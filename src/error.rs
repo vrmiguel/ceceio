@@ -1,3 +1,5 @@
+use crate::SmallString;
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error, PartialEq)]
@@ -23,4 +25,6 @@ pub enum Error {
         "Arity mismatch: expected at least {at_least}, received {received}"
     )]
     MinimumArityMismatch { at_least: u8, received: u8 },
+    #[error("Unknown symbol {0}")]
+    UnknownSymbol(SmallString),
 }

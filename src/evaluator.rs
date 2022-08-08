@@ -1,24 +1,40 @@
+use std::collections::HashMap;
+
 use crate::{
     expression::elements::{
         Application, Atom, Binding, FnIdentifier, If, IfElse,
     },
-    Expression, Result,
+    Error, Expression, Result, SmallString,
 };
 
 #[allow(unused)]
 pub struct Evaluator {}
 
 #[allow(unused)]
-pub struct Env {}
+#[derive(Debug, Default)]
+pub struct Env {
+    // Naive WIP representation
+    bindings: HashMap<SmallString, Expression>,
+}
 
 pub trait Evaluable {
     fn evaluate(self, env: &mut Env) -> Result<Expression>;
 }
 
 impl Evaluable for Atom {
-    fn evaluate(self, _: &mut Env) -> Result<Expression> {
-        // No further processing necessary
-        Ok(Expression::Atom(self))
+    fn evaluate(self, env: &mut Env) -> Result<Expression> {
+        let expr = match self {
+            Atom::Identifier(identifier) => {
+                // Sub bindings by their value
+                env.bindings
+                    .get(&identifier)
+                    .ok_or(Error::UnknownSymbol(identifier))?
+                    .clone()
+            }
+            other => Expression::Atom(other),
+        };
+
+        Ok(expr)
     }
 }
 
@@ -62,8 +78,16 @@ impl Evaluable for Application {
 }
 
 impl Evaluable for Binding {
-    fn evaluate(self, _env: &mut Env) -> Result<Expression> {
-        todo!()
+    fn evaluate(self, env: &mut Env) -> Result<Expression> {
+        let expression = self.expression.evaluate(env)?;
+
+        // We'll allow binding shadowing so whether or not
+        // this binding previously existed is not important
+        let _ = env
+            .bindings
+            .insert(self.identifier, expression.clone());
+
+        Ok(expression)
     }
 }
 
@@ -95,8 +119,41 @@ mod tests {
 
     // TODO: finish converting test cases to use `parse_and_eval`
     fn parse_and_eval(input: &str) -> Result<Expression> {
+        parse_and_eval_with_env(input, &mut Env::default())
+    }
+
+    fn parse_and_eval_with_env(
+        input: &str,
+        env: &mut Env,
+    ) -> Result<Expression> {
         let expr = parse_expression(input).unwrap().1;
-        expr.evaluate(&mut Env {})
+        expr.evaluate(env)
+    }
+
+    #[test]
+    fn evaluates_bindings() {
+        // TODO: ensure these following cases fail
+        // assert!(parse_expression("(def)").is_err());
+        // assert!(parse_expression("(def x)").is_err());
+        // assert!(parse_expression("(def 2 2)").is_err());
+
+        let mut env = Env::default();
+        assert_eq!(
+            parse_and_eval_with_env("(def five 5.0)", &mut env)
+                .unwrap(),
+            Expression::Atom(Atom::Number(5.0))
+        );
+
+        assert_eq!(
+            // Ensure that we can retrieve previous bindings
+            // from our env
+            parse_and_eval_with_env(
+                "(def six (+ five 1.0))",
+                &mut env
+            )
+            .unwrap(),
+            Expression::Atom(Atom::Number(6.0))
+        );
     }
 
     #[test]
@@ -232,31 +289,31 @@ mod tests {
     fn evaluates_multiplication_correctly() {
         let expr = parse_expression("(*)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Number(0.0))
         );
 
         let expr = parse_expression("(* 3)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Number(3.0))
         );
 
         let expr = parse_expression("(* 3 2)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Number(6.0))
         );
 
         let expr = parse_expression("(* 3 2 1)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Number(6.0))
         );
 
         let expr = parse_expression("(* 3 2 1 0)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Number(0.0))
         );
     }
@@ -265,20 +322,20 @@ mod tests {
     fn evaluates_subtraction_correctly() {
         let expr = parse_expression("(-)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Number(0.0))
         );
 
         let expr = parse_expression("(- 3)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Number(-3.0))
         );
 
         // FIXME: this is wrong
         let expr = parse_expression("(- 3 2)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Number(1.0))
         );
     }
@@ -287,7 +344,7 @@ mod tests {
     fn evaluates_if_expressions() {
         let expr = parse_expression("(if true 2)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Number(2.0))
         );
 
@@ -295,7 +352,7 @@ mod tests {
             .unwrap()
             .1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Number(5.0))
         );
     }
@@ -304,13 +361,13 @@ mod tests {
     fn evaluates_not_expressions() {
         let expr = parse_expression("(not true)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Boolean(false))
         );
 
         let expr = parse_expression("(not false)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Boolean(true))
         );
 
@@ -318,13 +375,13 @@ mod tests {
             .unwrap()
             .1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap(),
+            expr.evaluate(&mut Env::default()).unwrap(),
             Expression::Atom(Atom::Boolean(true))
         );
 
         let expr = parse_expression("(not)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap_err(),
+            expr.evaluate(&mut Env::default()).unwrap_err(),
             Error::ExactArityMismatch {
                 expected: 1,
                 received: 0
@@ -334,7 +391,7 @@ mod tests {
         let expr =
             parse_expression("(not false true)").unwrap().1;
         assert_eq!(
-            expr.evaluate(&mut Env {}).unwrap_err(),
+            expr.evaluate(&mut Env::default()).unwrap_err(),
             Error::ExactArityMismatch {
                 expected: 1,
                 received: 2

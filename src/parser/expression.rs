@@ -27,6 +27,7 @@ pub fn parse_expression(input: &str) -> IResult<Expression> {
         alt((
             parse_atom.map(Expression::Atom),
             parse_if,
+            parse_binding.map(Box::new).map(Expression::Binding),
             parse_application.map(Expression::Application),
         )),
     )(input)
