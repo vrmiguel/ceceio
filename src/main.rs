@@ -1,11 +1,25 @@
-use ceceio::{parse_expression, Env, Evaluable};
+use ceceio::{Atom, Expression, Interpreter};
 
 fn main() {
-    let expr =
-        parse_expression("(/ (* 2 3) (- 5 6 7))").unwrap().1;
+    let mut interp = Interpreter::new();
 
-    match expr.evaluate(&mut Env::default()) {
-        Ok(evaluated) => println!("{evaluated}"),
-        Err(err) => println!("Error: {err}"),
-    }
+    assert_eq!(
+        interp.parse_and_eval("(/ (* 2 3) (- 5 6 7))").unwrap(),
+        Expression::Atom(Atom::Number(-0.75))
+    );
+
+    assert_eq!(
+        interp.parse_and_eval("(def x 5)").unwrap(),
+        Expression::Atom(Atom::Number(5.0))
+    );
+
+    assert_eq!(
+        interp.parse_and_eval("(def twice (+ x x))").unwrap(),
+        Expression::Atom(Atom::Number(10.0))
+    );
+
+    assert_eq!(
+        interp.parse_and_eval("(= twice (* x 2) 10.0)").unwrap(),
+        Expression::Atom(Atom::Boolean(true))
+    );
 }

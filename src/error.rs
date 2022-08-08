@@ -27,4 +27,6 @@ pub enum Error {
     MinimumArityMismatch { at_least: u8, received: u8 },
     #[error("Unknown symbol {0}")]
     UnknownSymbol(SmallString),
+    #[error("Parsing error: {0}")]
+    ParsingError(String),
 }
