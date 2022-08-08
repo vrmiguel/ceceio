@@ -25,12 +25,12 @@ pub fn parse_atom(input: &str) -> IResult<Atom> {
             parse_double.map(Atom::Number),
             parse_boolean.map(Atom::Boolean),
             parse_builtin.map(Atom::BuiltIn),
-            parse_keyword.map(Atom::Keyword),
+            parse_symbol.map(Atom::Symbol),
         )),
     )(input)
 }
 
-fn parse_keyword(input: &str) -> IResult<SmallString> {
+fn parse_symbol(input: &str) -> IResult<SmallString> {
     context(
         "keyword",
         preceded(tag(":"), cut(parse_identifier)),
@@ -109,7 +109,7 @@ mod tests {
         expression::{elements::Atom, BuiltIn},
         parser::atom::{
             parse_atom, parse_boolean, parse_builtin,
-            parse_keyword, parse_operator,
+            parse_operator, parse_symbol,
         },
         SmallString,
     };
@@ -128,7 +128,7 @@ mod tests {
 
         assert_eq!(
             parse_atom(":arg"),
-            Ok(("", Atom::Keyword(SmallString::new("arg"))))
+            Ok(("", Atom::Symbol(SmallString::new("arg"))))
         );
 
         assert_eq!(
@@ -161,17 +161,17 @@ mod tests {
     }
 
     #[test]
-    fn parses_keywords() {
+    fn parses_symbols() {
         assert_eq!(
-            parse_keyword(":arg"),
+            parse_symbol(":arg"),
             Ok(("", SmallString::new("arg")))
         );
         assert_eq!(
-            parse_keyword(":arg other"),
+            parse_symbol(":arg other"),
             Ok((" other", SmallString::new("arg")))
         );
 
-        assert!(parse_keyword("arg1").is_err());
+        assert!(parse_symbol("arg1").is_err());
     }
 
     #[test]

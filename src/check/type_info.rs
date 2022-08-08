@@ -34,7 +34,7 @@ impl Typed for Atom {
     fn rough_type(&self) -> &'static str {
         match self {
             Atom::Number(_) => "number",
-            Atom::Keyword(_) => "keyword",
+            Atom::Symbol(_) => "symbol",
             Atom::Boolean(boolean) => {
                 if *boolean {
                     "true"

@@ -43,7 +43,7 @@ impl CheapClone for Atom {}
 pub enum Atom {
     Number(f64),
     /// A keyword of the form `:keyword`
-    Keyword(SmallString),
+    Symbol(SmallString),
     /// `true` or `false`
     Boolean(bool),
     BuiltIn(BuiltIn),
@@ -57,7 +57,7 @@ impl Display for Atom {
     ) -> std::fmt::Result {
         match self {
             Atom::Number(num) => write!(f, "{num}"),
-            Atom::Keyword(keyword) => write!(f, ":{keyword}"),
+            Atom::Symbol(keyword) => write!(f, ":{keyword}"),
             Atom::Boolean(boolean) => write!(f, "{boolean}"),
             Atom::BuiltIn(built_in) => {
                 f.write_str(built_in.rough_type())
