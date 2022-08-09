@@ -22,4 +22,18 @@ fn main() {
         interp.parse_and_eval("(= twice (* x 2) 10.0)").unwrap(),
         Expression::Atom(Atom::Boolean(true))
     );
+
+    assert_eq!(
+        interp
+            .parse_and_eval("(= (* x x x x x) 3125.0)")
+            .unwrap(),
+        Expression::Atom(Atom::Boolean(true))
+    );
+
+    let arg = std::env::args().skip(1).next().unwrap();
+
+    match interp.parse_and_eval(&arg) {
+        Ok(expr) => println!("{expr}"),
+        Err(err) => println!("{err}"),
+    }
 }
