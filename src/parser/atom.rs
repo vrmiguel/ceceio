@@ -11,7 +11,7 @@ use nom::{
     Parser,
 };
 
-use super::IResult;
+use super::{parse_reserved_word, IResult};
 use crate::{
     expression::{
         elements::{Atom, FnIdentifier},
@@ -49,6 +49,8 @@ pub fn parse_identifier(input: &str) -> IResult<&str> {
         not(digit1),
         alphanumeric1,
     ))(input)?;
+
+    not(parse_reserved_word)(input)?;
 
     Ok((rest, identifier))
 }
@@ -242,6 +244,14 @@ mod tests {
 
         assert!(parse_identifier(":arg1").is_err());
         assert!(parse_identifier("1arg").is_err());
+
+        // `def` is a reserved word so this must fail
+        assert!(parse_identifier("def").is_err());
+        assert!(parse_identifier("adef").is_ok());
+
+        // `fn` is a reserved word so this must fail
+        assert!(parse_identifier("fn").is_err());
+        assert!(parse_identifier("fnn").is_ok());
     }
 
     #[test]
