@@ -9,6 +9,7 @@ pub trait Typed {
 impl Typed for Expression {
     fn rough_type(&self) -> &'static str {
         match self {
+            Expression::Lambda(_) => "lambda",
             Expression::Binding(_) => "binding",
             Expression::Atom(atom) => atom.rough_type(),
             Expression::Application(_) => "application",

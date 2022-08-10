@@ -1,4 +1,4 @@
-use std::fmt::{self, Write};
+use std::fmt;
 
 pub mod builtin;
 pub mod elements;
@@ -42,6 +42,17 @@ impl Expression {
             })
         }
     }
+
+    pub fn as_lambda(&self) -> Result<&Lambda> {
+        if let Expression::Lambda(lambda) = self {
+            Ok(lambda)
+        } else {
+            Err(Error::TypeMismatch {
+                expected: "lambda",
+                received: self.rough_type(),
+            })
+        }
+    }
 }
 
 impl From<bool> for Expression {
@@ -59,9 +70,7 @@ impl From<f64> for Expression {
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expression::Lambda(_) => {
-                f.write_str("<anonymous function>")
-            }
+            Expression::Lambda(_) => f.write_str("<function>"),
             Expression::Atom(atom) => write!(f, "{atom}"),
             Expression::Application(app) => write!(f, "{app}"),
             Expression::Binding(binding) => {

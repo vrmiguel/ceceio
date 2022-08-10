@@ -1,5 +1,9 @@
 use std::fmt::Display;
 
+mod lambda;
+
+pub use lambda::Lambda;
+
 use crate::{
     BuiltIn, CheapClone, Expression, SmallString, Typed,
 };
@@ -59,12 +63,6 @@ pub enum Atom {
     Boolean(bool),
     BuiltIn(BuiltIn),
     Nil,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Lambda {
-    pub arguments: Vec<SmallString>,
-    pub body: Expression,
 }
 
 impl Display for Atom {

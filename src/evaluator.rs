@@ -17,6 +17,25 @@ pub struct Env {
     bindings: HashMap<SmallString, Expression>,
 }
 
+impl Env {
+    pub fn get(
+        &self,
+        identifier: SmallString,
+    ) -> Result<Expression> {
+        self.get_ref(identifier).map(Clone::clone)
+    }
+
+    pub fn get_ref(
+        &self,
+        identifier: SmallString,
+    ) -> Result<&Expression> {
+        Ok(self
+            .bindings
+            .get(&identifier)
+            .ok_or(Error::UnknownSymbol(identifier))?)
+    }
+}
+
 pub trait Evaluable {
     fn evaluate(self, env: &mut Env) -> Result<Expression>;
 }
@@ -26,10 +45,7 @@ impl Evaluable for Atom {
         let expr = match self {
             Atom::Identifier(identifier) => {
                 // Sub bindings by their value
-                env.bindings
-                    .get(&identifier)
-                    .ok_or(Error::UnknownSymbol(identifier))?
-                    .clone()
+                env.get(identifier)?
             }
             other => Expression::Atom(other),
         };
@@ -72,7 +88,14 @@ impl Evaluable for Application {
             FnIdentifier::BuiltIn(built_in) => {
                 built_in.apply(self.arguments, env)
             }
-            FnIdentifier::Other(_) => todo!(),
+            FnIdentifier::Other(identifier) => {
+                let lambda = env
+                    .get_ref(identifier)?
+                    .as_lambda()?
+                    .clone();
+
+                lambda.apply(self.arguments, env)
+            }
         }
     }
 }
@@ -94,6 +117,9 @@ impl Evaluable for Binding {
 impl Evaluable for Expression {
     fn evaluate(self, env: &mut Env) -> Result<Expression> {
         match self {
+            Expression::Lambda(lambda) => {
+                Ok(Expression::Lambda(lambda.clone()))
+            }
             Expression::Binding(binding) => {
                 binding.evaluate(env)
             }

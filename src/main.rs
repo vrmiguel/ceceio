@@ -30,6 +30,15 @@ fn main() {
         true.into()
     );
 
+    assert!(interp
+        .parse_and_eval("(def ok (fn [] :ok))")
+        .is_ok());
+
+    assert_eq!(
+        interp.parse_and_eval("(= (ok) :ok)").unwrap(),
+        true.into()
+    );
+
     let arg = std::env::args().skip(1).next().unwrap();
 
     match interp.parse_and_eval(&arg) {
