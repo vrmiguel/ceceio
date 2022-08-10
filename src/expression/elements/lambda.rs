@@ -106,7 +106,18 @@ mod tests {
             .is_ok());
 
         assert_eq!(
-            interp.parse_and_eval("(= (nothing) nil)").unwrap(),
+            interp
+                .parse_and_eval("(= (nothing 2) nil)")
+                .unwrap(),
+            true.into()
+        );
+
+        assert_eq!(
+            interp
+                .parse_and_eval(
+                    "(= (nothing nothing) (nothing nil) nil)"
+                )
+                .unwrap(),
             true.into()
         );
     }

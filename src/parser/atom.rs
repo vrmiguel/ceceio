@@ -1,9 +1,7 @@
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{
-        alphanumeric0, alphanumeric1, digit1, one_of,
-    },
+    character::complete::{alphanumeric1, digit1, one_of},
     combinator::{cut, not, recognize, value},
     error::context,
     number::complete::double,
@@ -28,6 +26,7 @@ pub fn parse_atom(input: &str) -> IResult<Atom> {
             parse_boolean.map(Atom::Boolean),
             parse_builtin.map(Atom::BuiltIn),
             parse_symbol.map(SmallString::new).map(Atom::Symbol),
+            value(Atom::Nil, tag("nil")),
             parse_identifier
                 .map(SmallString::new)
                 .map(Atom::Identifier),
