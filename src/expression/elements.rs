@@ -8,7 +8,7 @@ use crate::{
     BuiltIn, CheapClone, Expression, SmallString, Typed,
 };
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FnIdentifier {
     BuiltIn(BuiltIn),
     Other(SmallString),

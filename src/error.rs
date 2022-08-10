@@ -2,7 +2,7 @@ use crate::SmallString;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, thiserror::Error, PartialEq)]
+#[derive(Debug, thiserror::Error, Eq, PartialEq)]
 pub enum Error {
     // #[error("Tried to add {0} into a Value which is not a
     // collection")] CantAddToValue(Value),

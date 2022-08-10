@@ -29,10 +29,9 @@ impl Env {
         &self,
         identifier: SmallString,
     ) -> Result<&Expression> {
-        Ok(self
-            .bindings
+        self.bindings
             .get(&identifier)
-            .ok_or(Error::UnknownSymbol(identifier))?)
+            .ok_or(Error::UnknownSymbol(identifier))
     }
 }
 
@@ -118,7 +117,7 @@ impl Evaluable for Expression {
     fn evaluate(self, env: &mut Env) -> Result<Expression> {
         match self {
             Expression::Lambda(lambda) => {
-                Ok(Expression::Lambda(lambda.clone()))
+                Ok(Expression::Lambda(lambda))
             }
             Expression::Binding(binding) => {
                 binding.evaluate(env)

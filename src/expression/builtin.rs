@@ -126,7 +126,7 @@ impl BuiltIn {
             }
         }
 
-        return Ok(true.into());
+        Ok(true.into())
     }
 
     /// Folds the argument list using the given function.

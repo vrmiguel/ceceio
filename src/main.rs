@@ -39,7 +39,32 @@ fn main() {
         true.into()
     );
 
-    let arg = std::env::args().skip(1).next().unwrap();
+    assert!(interp
+        .parse_and_eval("(def id (fn [x] x))")
+        .is_ok());
+
+    assert_eq!(
+        interp.parse_and_eval("(= (id 2) 2)").unwrap(),
+        true.into()
+    );
+
+    assert_eq!(
+        interp
+            .parse_and_eval("(= (id :success) :success)")
+            .unwrap(),
+        true.into()
+    );
+
+    assert!(interp
+        .parse_and_eval("(def double (fn [x] (+ x x)))")
+        .is_ok());
+
+    assert_eq!(
+        interp.parse_and_eval("(= (double 2) (* 4 1))").unwrap(),
+        true.into()
+    );
+
+    let arg = std::env::args().nth(1).unwrap();
 
     match interp.parse_and_eval(&arg) {
         Ok(expr) => println!("{expr}"),
