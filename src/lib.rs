@@ -6,6 +6,7 @@ mod expression;
 mod interner;
 mod interpreter;
 mod parser;
+mod scope;
 mod small_string;
 
 pub use cheap_clone::CheapClone;
