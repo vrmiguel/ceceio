@@ -29,6 +29,7 @@ impl Typed for BuiltIn {
             BuiltIn::Not => "not",
             BuiltIn::And => "and",
             BuiltIn::Or => "or",
+            BuiltIn::Remainder => "%",
         }
     }
 }

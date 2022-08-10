@@ -1,4 +1,3 @@
-use super::Application;
 use crate::{
     ensure_exact_arity, Atom, Env, Error, Evaluable, Expression,
     Result, SmallString,
@@ -13,17 +12,20 @@ pub struct Lambda {
 impl Lambda {
     pub fn apply(
         self,
-        mut args: Vec<Expression>,
+        mut received_arguments: Vec<Expression>,
         env: &mut Env,
     ) -> Result<Expression> {
         // The code below is essentially the same as building a
         // local scope with the given arguments into
         // `env` and then calling `self.body.evaluate(env)`,
         // but allows us to better manage the arguments'
-        // ownership
+        // ownership, and should be generally faster
+        // since we can avoid costly emulated frame stack
+        // building and destruction, at the cost of
+        // having big and weird code
         ensure_exact_arity(
             self.arguments.len() as _,
-            args.len() as _,
+            received_arguments.len() as _,
         )?;
 
         match self.body {
@@ -36,51 +38,83 @@ impl Lambda {
                     .position(|arg| arg == &identifier)
                     .ok_or(Error::UnknownSymbol(identifier))?;
 
-                Ok(args.swap_remove(idx))
+                Ok(received_arguments.swap_remove(idx))
             }
             Expression::Atom(atom) => {
                 // Other atoms are trivial, so we'll just return
                 // them. E.g.: `(fn [] 3)`
                 Ok(Expression::Atom(atom))
             }
-            Expression::Application(app) => {
-                let Application {
-                    name,
-                    mut arguments,
-                } = app;
-                for expression in arguments.iter_mut() {
+            Expression::Application(mut app) => {
+                for expression in app.arguments.iter_mut() {
                     if let Expression::Atom(Atom::Identifier(
                         identifier,
                     )) = expression
                     {
-                        let idx = self
-                            .arguments
-                            .iter()
-                            .position(|arg| arg == &*identifier)
-                            .ok_or_else(|| {
-                                Error::UnknownSymbol(
-                                    identifier.clone(),
-                                )
-                            })?;
-
                         // TODO: figure out a way of taking
                         // ownership of the argument instead of
                         // cloning
-                        *expression = args[idx].clone();
+                        *expression = Self::resolve_argument(
+                            identifier,
+                            &self.arguments,
+                            &received_arguments,
+                            env,
+                        )?;
                     }
                 }
 
-                Application { name, arguments }.evaluate(env)
+                app.evaluate(env)
             }
-            Expression::If(_) => todo!(),
-            Expression::IfElse(_) => todo!(),
+            Expression::If(mut if_expr) => {
+                if let Expression::Atom(Atom::Identifier(
+                    ref identifier,
+                )) = if_expr.condition
+                {
+                    if_expr.condition = Self::resolve_argument(
+                        identifier,
+                        &self.arguments,
+                        &received_arguments,
+                        env,
+                    )?;
+                }
+                if let Expression::Atom(Atom::Identifier(
+                    ref identifier,
+                )) = if_expr.do_this
+                {
+                    if_expr.do_this = Self::resolve_argument(
+                        identifier,
+                        &self.arguments,
+                        &received_arguments,
+                        env,
+                    )?;
+                }
+
+                if_expr.evaluate(env)
+            }
+            Expression::IfElse(_if_else_expr) => todo!(),
             Expression::Binding(binding) => {
                 binding.evaluate(env)
             }
             Expression::Lambda(lambda) => {
-                lambda.apply(args, env)
+                lambda.apply(received_arguments, env)
             }
         }
+    }
+
+    fn resolve_argument(
+        identifier: &SmallString,
+        fn_arguments: &[SmallString],
+        received_arguments: &[Expression],
+        env: &mut Env,
+    ) -> Result<Expression> {
+        let idx = fn_arguments
+            .iter()
+            .position(|arg| arg == identifier)
+            .ok_or_else(|| {
+                Error::UnknownSymbol(identifier.clone())
+            })?;
+
+        received_arguments[idx].clone().evaluate(env)
     }
 }
 

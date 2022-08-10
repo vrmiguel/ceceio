@@ -24,6 +24,8 @@ pub enum BuiltIn {
     And,
     /// "or"
     Or,
+    /// "%"
+    Remainder,
 }
 
 impl BuiltIn {
@@ -65,6 +67,18 @@ impl BuiltIn {
             BuiltIn::Or => {
                 ensure_minimum_arity(2, arity_received)?;
                 Self::or(expressions)
+            }
+            BuiltIn::Remainder => {
+                ensure_exact_arity(2, arity_received)?;
+                let mut expressions = expressions;
+
+                // Should not fail since we've just checked arity
+                let lhs =
+                    expressions.next().unwrap()?.as_number()?;
+                let rhs =
+                    expressions.next().unwrap()?.as_number()?;
+
+                Ok((lhs % rhs).into())
             }
         }
     }

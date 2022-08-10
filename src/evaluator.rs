@@ -139,7 +139,7 @@ mod tests {
     use super::{Env, Evaluable};
     use crate::{
         expression::elements::Atom, parse_expression, Error,
-        Expression, Result,
+        Expression, Interpreter, Result,
     };
 
     // TODO: finish converting test cases to use `parse_and_eval`
@@ -308,6 +308,33 @@ mod tests {
                 .unwrap(),
             15.0.into()
         );
+    }
+
+    #[test]
+    fn evaluates_remainder_operations() {
+        let mut interp = Interpreter::new();
+        assert_eq!(
+            interp.parse_and_eval("(% 5 2)").unwrap(),
+            1.0.into()
+        );
+        assert_eq!(
+            interp.parse_and_eval("(= (% 4 2) 0)").unwrap(),
+            true.into()
+        );
+        assert_eq!(
+            interp
+                .parse_and_eval("(= (% 4 2) (% 9 3) (% 33 11))")
+                .unwrap(),
+            true.into()
+        );
+
+        // Must fail arity check
+        interp.parse_and_eval("(%)").unwrap_err();
+        interp.parse_and_eval("(% 1)").unwrap_err();
+        interp.parse_and_eval("(% 1 4 5)").unwrap_err();
+
+        // Must fail type-check
+        interp.parse_and_eval("(% :ok :hey)").unwrap_err();
     }
 
     #[test]

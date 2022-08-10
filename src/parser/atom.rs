@@ -103,7 +103,7 @@ fn parse_boolean(input: &str) -> IResult<bool> {
 #[inline(always)]
 fn parse_operator(input: &str) -> IResult<BuiltIn> {
     let (rest, op) =
-        context("operator", one_of("+-*/="))(input)?;
+        context("operator", one_of("+-*/=%"))(input)?;
 
     let op = match op {
         '+' => BuiltIn::Plus,
@@ -111,8 +111,11 @@ fn parse_operator(input: &str) -> IResult<BuiltIn> {
         '*' => BuiltIn::Times,
         '/' => BuiltIn::Divide,
         '=' => BuiltIn::Equal,
+        '%' => BuiltIn::Remainder,
         _ => {
-            unreachable!("we checked that `op in [+-*/=]` above")
+            unreachable!(
+                "we checked that `op in [+-*/=%]` above"
+            )
         }
     };
 
@@ -270,6 +273,10 @@ mod tests {
         assert_eq!(
             parse_operator("=+-/"),
             Ok(("+-/", BuiltIn::Equal))
+        );
+        assert_eq!(
+            parse_operator("%=+-/"),
+            Ok(("=+-/", BuiltIn::Remainder))
         );
 
         assert!(parse_double("a 1.2").is_err());

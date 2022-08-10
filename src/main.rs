@@ -64,6 +64,20 @@ fn main() {
         true.into()
     );
 
+    assert!(interp
+        .parse_and_eval("(def even (fn [x] (= (% x 2) 0)))")
+        .is_ok());
+
+    assert_eq!(
+        interp.parse_and_eval("(even 2)").unwrap(),
+        true.into()
+    );
+
+    assert_eq!(
+        interp.parse_and_eval("(even 3)").unwrap(),
+        false.into()
+    );
+
     let arg = std::env::args().nth(1).unwrap();
 
     match interp.parse_and_eval(&arg) {
