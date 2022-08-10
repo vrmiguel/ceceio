@@ -13,6 +13,7 @@ use crate::{
     expression::{
         elements::{
             Application, Binding, FnIdentifier, If, IfElse,
+            Lambda,
         },
         Expression,
     },
@@ -28,9 +29,36 @@ pub fn parse_expression(input: &str) -> IResult<Expression> {
             parse_atom.map(Expression::Atom),
             parse_if,
             parse_binding.map(Box::new).map(Expression::Binding),
+            parse_lambda.map(Box::new).map(Expression::Lambda),
             parse_application.map(Expression::Application),
         )),
     )(input)
+}
+
+fn parse_argument_list(
+    input: &str,
+) -> IResult<Vec<SmallString>> {
+    delimited(
+        preceded(multispace0, tag("[")),
+        many0(preceded(
+            multispace0,
+            parse_identifier.map(SmallString::new),
+        )),
+        preceded(multispace0, tag("]")),
+    )(input)
+}
+
+fn parse_lambda(input: &str) -> IResult<Lambda> {
+    fn parse_lambda_inner(input: &str) -> IResult<Lambda> {
+        let (rest, _) = tag("fn ")(input)?;
+        let (rest, arguments) = parse_argument_list(rest)?;
+        let (rest, body) = parse_expression(rest)?;
+
+        let lambda = Lambda { arguments, body };
+        Ok((rest, lambda))
+    }
+
+    parse_parenthesis_enclosed(parse_lambda_inner)(input)
 }
 
 fn parse_if(input: &str) -> IResult<Expression> {
@@ -126,11 +154,14 @@ fn parse_application(input: &str) -> IResult<Application> {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_application, parse_binding, Application};
+    use super::{
+        parse_application, parse_argument_list, parse_binding,
+        parse_lambda, Application,
+    };
     use crate::{
         expression::{
             elements::{
-                Atom, Binding, FnIdentifier, If, IfElse,
+                Atom, Binding, FnIdentifier, If, IfElse, Lambda,
             },
             BuiltIn, Expression,
         },
@@ -234,6 +265,43 @@ mod tests {
     }
 
     #[test]
+    fn parses_lambdas() {
+        assert_eq!(
+            parse_lambda("(fn [] 2)"),
+            Ok((
+                "",
+                Lambda {
+                    arguments: vec![],
+                    body: 2.0.into()
+                }
+            ))
+        );
+
+        assert_eq!(
+            parse_lambda("(fn [x] (+ x x))"),
+            Ok((
+                "",
+                Lambda {
+                    arguments: vec![SmallString::new("x")],
+                    body: Expression::Application(Application {
+                        name: FnIdentifier::BuiltIn(
+                            BuiltIn::Plus
+                        ),
+                        arguments: vec![
+                            Expression::Atom(
+                                Atom::Identifier(
+                                    SmallString::new("x")
+                                )
+                            );
+                            2
+                        ]
+                    })
+                }
+            ))
+        );
+    }
+
+    #[test]
     fn parses_bindings() {
         assert_eq!(
             parse_binding("(def two 2)"),
@@ -320,5 +388,38 @@ mod tests {
             "(add (if true 2 3) (- (* 3 4 (/ 3 4)) 5))"
         )
         .is_ok());
+    }
+
+    #[test]
+    fn parses_argument_lists() {
+        assert_eq!(
+            parse_argument_list("[] "),
+            Ok((" ", vec![]))
+        );
+        assert_eq!(parse_argument_list("[ ]"), Ok(("", vec![])));
+        assert_eq!(
+            parse_argument_list("[x y]"),
+            Ok((
+                "",
+                vec![
+                    SmallString::new("x"),
+                    SmallString::new("y")
+                ]
+            ))
+        );
+        assert_eq!(
+            parse_argument_list(" [ x y z w e f     ] "),
+            Ok((
+                " ",
+                vec![
+                    SmallString::new("x"),
+                    SmallString::new("y"),
+                    SmallString::new("z"),
+                    SmallString::new("w"),
+                    SmallString::new("e"),
+                    SmallString::new("f"),
+                ]
+            ))
+        );
     }
 }

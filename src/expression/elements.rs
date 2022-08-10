@@ -52,11 +52,19 @@ pub enum Atom {
     Number(f64),
     /// A symbol of the form `:symbol`
     Symbol(SmallString),
+    // TODO: should identifier be in Expression?
+    /// An identifier of a binding
     Identifier(SmallString),
     /// `true` or `false`
     Boolean(bool),
     BuiltIn(BuiltIn),
     Nil,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Lambda {
+    pub arguments: Vec<SmallString>,
+    pub body: Expression,
 }
 
 impl Display for Atom {

@@ -1,11 +1,13 @@
-use std::fmt;
+use std::fmt::{self, Write};
 
 pub mod builtin;
 pub mod elements;
 
 pub use builtin::BuiltIn;
 
-use self::elements::{Application, Atom, Binding, If, IfElse};
+use self::elements::{
+    Application, Atom, Binding, If, IfElse, Lambda,
+};
 use crate::{Error, Result, Typed};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -15,6 +17,7 @@ pub enum Expression {
     If(Box<If>),
     IfElse(Box<IfElse>),
     Binding(Box<Binding>),
+    Lambda(Box<Lambda>),
 }
 
 impl Expression {
@@ -56,6 +59,9 @@ impl From<f64> for Expression {
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Expression::Lambda(_) => {
+                f.write_str("<anonymous function>")
+            }
             Expression::Atom(atom) => write!(f, "{atom}"),
             Expression::Application(app) => write!(f, "{app}"),
             Expression::Binding(binding) => {
