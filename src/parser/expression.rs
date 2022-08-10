@@ -137,6 +137,7 @@ fn parse_application(input: &str) -> IResult<Application> {
         input: &str,
     ) -> IResult<(FnIdentifier, Vec<Expression>)> {
         let (rest, name) = parse_fn_identifier(input)?;
+        // let (rest, _) =
 
         let (rest, args) = many0(preceded(
             multispace0,
@@ -172,6 +173,19 @@ mod tests {
 
     #[test]
     fn parses_applications() {
+        assert_eq!(
+            parse_application("(nothing)"),
+            Ok((
+                "",
+                Application {
+                    name: FnIdentifier::Other(SmallString::new(
+                        "nothing"
+                    )),
+                    arguments: vec![]
+                }
+            ))
+        );
+
         assert_eq!(
             parse_application("(exit)"),
             Ok((

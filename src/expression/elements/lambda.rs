@@ -16,6 +16,11 @@ impl Lambda {
         mut args: Vec<Expression>,
         env: &mut Env,
     ) -> Result<Expression> {
+        // The code below is essentially the same as building a
+        // local scope with the given arguments into
+        // `env` and then calling `self.body.evaluate(env)`,
+        // but allows us to better manage the arguments'
+        // ownership
         ensure_exact_arity(
             self.arguments.len() as _,
             args.len() as _,

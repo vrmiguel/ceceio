@@ -1,11 +1,13 @@
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{alphanumeric1, digit1, one_of},
+    character::complete::{
+        alphanumeric0, alphanumeric1, digit1, one_of,
+    },
     combinator::{cut, not, recognize, value},
     error::context,
     number::complete::double,
-    sequence::{pair, preceded},
+    sequence::{pair, preceded, terminated},
     Parser,
 };
 
@@ -57,9 +59,18 @@ fn parse_builtin(input: &str) -> IResult<BuiltIn> {
         "builtin",
         alt((
             parse_operator,
-            value(BuiltIn::Not, tag("not")),
-            value(BuiltIn::And, tag("and")),
-            value(BuiltIn::Or, tag("or")),
+            value(
+                BuiltIn::Not,
+                terminated(tag("not"), not(alphanumeric1)),
+            ),
+            value(
+                BuiltIn::And,
+                terminated(tag("and"), not(alphanumeric1)),
+            ),
+            value(
+                BuiltIn::Or,
+                terminated(tag("or"), not(alphanumeric1)),
+            ),
         )),
     )(input)
 }
@@ -185,36 +196,36 @@ mod tests {
     #[test]
     fn parses_builtins() {
         assert_eq!(
-            parse_builtin("+-/="),
-            Ok(("-/=", BuiltIn::Plus))
+            parse_builtin("+ -/="),
+            Ok((" -/=", BuiltIn::Plus))
         );
         assert_eq!(
-            parse_builtin("-/=+"),
-            Ok(("/=+", BuiltIn::Minus))
+            parse_builtin("- /=+"),
+            Ok((" /=+", BuiltIn::Minus))
         );
         assert_eq!(
-            parse_builtin("/=+-"),
-            Ok(("=+-", BuiltIn::Divide))
+            parse_builtin("/ =+-"),
+            Ok((" =+-", BuiltIn::Divide))
         );
         assert_eq!(
-            parse_builtin("=+-/"),
-            Ok(("+-/", BuiltIn::Equal))
+            parse_builtin("= +-/"),
+            Ok((" +-/", BuiltIn::Equal))
         );
         assert_eq!(
-            parse_builtin("not=+-/"),
-            Ok(("=+-/", BuiltIn::Not))
+            parse_builtin("not =+-/"),
+            Ok((" =+-/", BuiltIn::Not))
         );
         assert_eq!(
-            parse_builtin("and=+-/not"),
-            Ok(("=+-/not", BuiltIn::And))
+            parse_builtin("and =+-/not"),
+            Ok((" =+-/not", BuiltIn::And))
         );
 
         assert_eq!(
-            parse_builtin("or=+and-/not"),
-            Ok(("=+and-/not", BuiltIn::Or))
+            parse_builtin("or =+and-/not"),
+            Ok((" =+and-/not", BuiltIn::Or))
         );
 
-        assert!(parse_double("a 1.2").is_err());
+        assert!(parse_builtin("a 1.2").is_err());
     }
 
     #[test]
@@ -234,18 +245,18 @@ mod tests {
     }
 
     #[test]
-    fn parses_operations() {
+    fn parses_operators() {
         assert_eq!(
-            parse_operator("+-/="),
-            Ok(("-/=", BuiltIn::Plus))
+            parse_operator("+ -/="),
+            Ok((" -/=", BuiltIn::Plus))
         );
         assert_eq!(
-            parse_operator("-/=+"),
-            Ok(("/=+", BuiltIn::Minus))
+            parse_operator("- /=+"),
+            Ok((" /=+", BuiltIn::Minus))
         );
         assert_eq!(
-            parse_operator("/=+-"),
-            Ok(("=+-", BuiltIn::Divide))
+            parse_operator("/ =+-"),
+            Ok((" =+-", BuiltIn::Divide))
         );
         assert_eq!(
             parse_operator("=+-/"),

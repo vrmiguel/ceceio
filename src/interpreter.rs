@@ -22,7 +22,7 @@ impl Interpreter {
     }
 
     pub fn parse(input: &str) -> Result<Expression> {
-        let (rest, expr) = parse_expression(input)
+        let (_, expr) = parse_expression(input)
             .map_err(Self::stringify_error)?;
 
         // assert!(rest.trim().is_empty());
