@@ -78,3 +78,58 @@ impl Lambda {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::Interpreter;
+
+    #[test]
+    fn evaluates_atomic_lambdas() {
+        let mut interp = Interpreter::new();
+
+        assert!(interp
+            .parse_and_eval("(def ok (fn [] :ok))")
+            .is_ok());
+
+        assert_eq!(
+            interp.parse_and_eval("(= (ok) :ok)").unwrap(),
+            true.into()
+        );
+
+        assert!(interp
+            .parse_and_eval("(def nothing (fn [x] nil))")
+            .is_ok());
+
+        assert_eq!(
+            interp.parse_and_eval("(= (nothing) nil)").unwrap(),
+            true.into()
+        );
+    }
+
+    #[test]
+    fn subs_identifiers_by_their_values() {
+        let mut interp = Interpreter::new();
+
+        assert!(interp
+            .parse_and_eval("(def id (fn [x] x)))")
+            .is_ok());
+
+        assert_eq!(
+            interp
+                .parse_and_eval("(= (id :success) :success)")
+                .unwrap(),
+            true.into()
+        );
+
+        assert!(interp
+            .parse_and_eval("(def double (fn [x] (+ x x)))")
+            .is_ok());
+
+        assert_eq!(
+            interp
+                .parse_and_eval("(= (double 2) (* 4 1))")
+                .unwrap(),
+            true.into()
+        );
+    }
+}

@@ -25,7 +25,7 @@ impl Interpreter {
         let (rest, expr) = parse_expression(input)
             .map_err(Self::stringify_error)?;
 
-        assert!(rest.trim().is_empty());
+        // assert!(rest.trim().is_empty());
 
         Ok(expr)
     }
