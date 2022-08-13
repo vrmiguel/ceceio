@@ -8,9 +8,6 @@ use crate::{
 };
 
 #[allow(unused)]
-pub struct Evaluator {}
-
-#[allow(unused)]
 #[derive(Debug, Default)]
 pub struct Env {
     // Naive WIP representation
