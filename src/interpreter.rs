@@ -23,7 +23,7 @@ impl Interpreter {
 
     pub fn parse(input: &str) -> Result<Expression> {
         let (_, expr) = parse_expression(input)
-            .map_err(Self::stringify_error)?;
+            .map_err(|err| Self::stringify_error(input, err))?;
 
         // assert!(rest.trim().is_empty());
 
@@ -38,9 +38,16 @@ impl Interpreter {
     }
 
     fn stringify_error(
+        input: &str,
         error: nom::Err<nom::error::VerboseError<&str>>,
     ) -> Error {
-        Error::ParsingError(error.to_string())
+        match error {
+            nom::Err::Incomplete(_) => unreachable!(),
+            nom::Err::Error(error)
+            | nom::Err::Failure(error) => Error::ParsingError(
+                nom::error::convert_error(input, error),
+            ),
+        }
     }
 }
 

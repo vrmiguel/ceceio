@@ -27,9 +27,9 @@ impl Scope<'_> {
         Ok(&self.expressions[idx])
     }
 
-    pub fn resolve_all_in_place<'other>(
+    pub fn resolve_all_in_place(
         &self,
-        exprs: &'other mut [Expression],
+        exprs: &mut [Expression],
     ) {
         for expression in exprs.iter_mut() {
             if let Expression::Atom(Atom::Identifier(
