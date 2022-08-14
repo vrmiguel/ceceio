@@ -31,6 +31,7 @@ pub fn parse_expression(input: &str) -> IResult<Expression> {
             parse_binding.map(Box::new).map(Expression::Binding),
             parse_lambda.map(Box::new).map(Expression::Lambda),
             parse_application.map(Expression::Application),
+            parse_cond.map(Expression::Cond),
         )),
     )(input)
 }
@@ -153,6 +154,20 @@ fn parse_application(input: &str) -> IResult<Application> {
     Ok((rest, Application { name, arguments }))
 }
 
+fn parse_cond(
+    input: &str,
+) -> IResult<Vec<(Expression, Expression)>> {
+    fn parse_cond_inner(
+        input: &str,
+    ) -> IResult<Vec<(Expression, Expression)>> {
+        let (rest, _) = tag("cond")(input)?;
+
+        many0(tuple((parse_expression, parse_expression)))(rest)
+    }
+
+    parse_parenthesis_enclosed(parse_cond_inner)(input)
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
@@ -167,7 +182,7 @@ mod tests {
             BuiltIn, Expression,
         },
         parse_expression,
-        parser::expression::parse_if,
+        parser::expression::{parse_cond, parse_if},
         SmallString,
     };
 
@@ -435,5 +450,41 @@ mod tests {
                 ]
             ))
         );
+    }
+
+    #[test]
+    fn parses_cond_expressions() {
+        assert_eq!(parse_cond("(cond)"), Ok(("", vec![])));
+
+        assert_eq!(
+            parse_cond("(cond true 2)"),
+            Ok((
+                "",
+                vec![(
+                    Expression::Atom(Atom::Boolean(true)),
+                    2.0.into()
+                )]
+            ))
+        );
+
+        assert_eq!(
+            parse_cond("(cond false 2 true 5)"),
+            Ok((
+                "",
+                vec![
+                    (
+                        Expression::Atom(Atom::Boolean(false)),
+                        2.0.into()
+                    ),
+                    (
+                        Expression::Atom(Atom::Boolean(true)),
+                        5.0.into()
+                    )
+                ]
+            ))
+        );
+
+        // Fails because we don't yet support odd-length conds
+        assert!(parse_cond("(cond false 2 true)").is_err());
     }
 }

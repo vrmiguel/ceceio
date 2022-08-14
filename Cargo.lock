@@ -3,9 +3,16 @@
 version = 3
 
 [[package]]
+name = "argv"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a3b05dd06b7786a3a2fcc5e2189395958f175dd53a1026e5a74c4fa97644232"
+
+[[package]]
 name = "ceceio"
 version = "0.1.0"
 dependencies = [
+ "argv",
  "nom",
  "thiserror",
 ]

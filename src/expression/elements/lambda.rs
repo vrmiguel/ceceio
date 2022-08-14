@@ -45,25 +45,10 @@ impl Lambda {
                 // them. E.g.: `(fn [] 3)`
                 Ok(Expression::Atom(atom))
             }
-            Expression::Application(_) => {
-                // Resolve all identifiers (recursively, if there
-                // are applications within this one)
-                self.body.resolve_all(
-                    &self.arguments,
-                    &received_arguments,
-                    env,
-                )?;
-                self.body.evaluate(env)
-            }
-            Expression::If(_) => {
-                self.body.resolve_all(
-                    &self.arguments,
-                    &received_arguments,
-                    env,
-                )?;
-                self.body.evaluate(env)
-            }
-            Expression::IfElse(_) => {
+            Expression::Application(_)
+            | Expression::If(_)
+            | Expression::IfElse(_)
+            | Expression::Cond(_) => {
                 self.body.resolve_all(
                     &self.arguments,
                     &received_arguments,

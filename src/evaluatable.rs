@@ -127,8 +127,31 @@ impl Evaluable for Expression {
             Expression::IfElse(if_else_expr) => {
                 if_else_expr.evaluate(env)
             }
+            Expression::Cond(conditions) => {
+                eval_cond(conditions, env)
+            }
         }
     }
+}
+
+fn eval_cond(
+    pairs: Vec<(Expression, Expression)>,
+    env: &mut Env,
+) -> Result<Expression> {
+    // TODO: add odd-length verification and support
+    for (condition, then) in pairs {
+        let cond = matches!(
+            condition.evaluate(env)?,
+            Expression::Atom(Atom::Boolean(true))
+        );
+
+        if cond {
+            return then.evaluate(env);
+        }
+    }
+
+    // Nothing evaluated to true, so we'll return nil
+    Ok(Expression::default())
 }
 
 // TODO: transform this into a trait
@@ -458,6 +481,34 @@ mod tests {
                 expected: 1,
                 received: 2
             }
+        );
+    }
+
+    #[test]
+    fn evaluates_cond_expressions() {
+        let mut interp = Interpreter::new();
+        assert!(interp
+            .parse_and_eval("(def even? (fn [x] (= (% x 2) 0)))")
+            .is_ok());
+
+        assert_eq!(
+            interp.parse_and_eval("(cond true 2)").unwrap(),
+            2.0.into()
+        );
+        assert_eq!(
+            interp
+                .parse_and_eval("(cond (even? 4) (* 4 2))")
+                .unwrap(),
+            8.0.into()
+        );
+
+        assert_eq!(
+            interp
+                .parse_and_eval(
+                    "(cond (even? 3) (* 4 2) (even? 4) false)"
+                )
+                .unwrap(),
+            false.into()
         );
     }
 }

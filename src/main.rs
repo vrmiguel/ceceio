@@ -95,8 +95,10 @@ fn main() {
         8.0.into()
     );
 
+    let file = argv::iter().nth(1).unwrap();
+
     let mut reader =
-        ReallocBufReader::from("example.cec").unwrap();
+        ReallocBufReader::from(file).unwrap();
 
     while let Some(line) = reader.read_line().unwrap() {
         let line = line.trim();
@@ -104,12 +106,7 @@ fn main() {
             continue;
         }
 
-        match interp.parse_and_eval(line) {
-            Ok(expr) => {
-                println!("{line} -> {expr}")
-            }
-            Err(err) => eprintln!("{err}"),
-        }
+        interp.parse_and_eval(line).unwrap();
     }
 }
 

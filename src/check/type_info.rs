@@ -11,6 +11,7 @@ impl Typed for Expression {
         match self {
             Expression::Lambda(_) => "lambda",
             Expression::Binding(_) => "binding",
+            Expression::Cond(_) => "cond",
             Expression::Atom(atom) => atom.rough_type(),
             Expression::Application(_) => "application",
             Expression::If(_) | Expression::IfElse(_) => "if",

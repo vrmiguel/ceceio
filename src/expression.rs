@@ -1,4 +1,7 @@
-use std::{fmt, mem};
+use std::{
+    fmt::{self},
+    mem,
+};
 
 pub mod builtin;
 pub mod elements;
@@ -17,6 +20,7 @@ use crate::{
 pub enum Expression {
     Atom(Atom),
     Application(Application),
+    Cond(Vec<(Expression, Expression)>),
     If(Box<If>),
     IfElse(Box<IfElse>),
     Binding(Box<Binding>),
@@ -75,6 +79,21 @@ impl Expression {
                     let expr = mem::take(self);
                     expr.evaluate(env)
                 })?;
+            }
+            Expression::Cond(conditions) => {
+                for cond in conditions.iter_mut() {
+                    cond.0.resolve_all(
+                        fn_arguments,
+                        received_arguments,
+                        env,
+                    )?;
+
+                    cond.1.resolve_all(
+                        fn_arguments,
+                        received_arguments,
+                        env,
+                    )?;
+                }
             }
             Expression::Application(app) => {
                 for expression in app.arguments.iter_mut() {
@@ -145,9 +164,23 @@ impl fmt::Display for Expression {
             Expression::Binding(binding) => {
                 write!(f, "{binding}")
             }
-            Expression::If(_) | Expression::IfElse(_) => {
-                f.write_str("if")
+            Expression::If(if_expr) => {
+                write!(
+                    f,
+                    "(if {} {} nil)",
+                    if_expr.condition, if_expr.do_this
+                )
             }
+            Expression::IfElse(if_else) => {
+                write!(
+                    f,
+                    "(if {} {} {})",
+                    if_else.condition,
+                    if_else.if_true,
+                    if_else.if_false
+                )
+            }
+            Expression::Cond(_) => f.write_str("cond (TODO)"),
         }
     }
 }

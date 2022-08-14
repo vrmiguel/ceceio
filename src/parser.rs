@@ -27,6 +27,7 @@ fn parse_reserved_word(input: &str) -> IResult<&str> {
             tag("nil"),
             tag("def"),
             tag("fn"),
+            tag("cond"),
         )),
         not(alphanumeric1),
     )(input)
