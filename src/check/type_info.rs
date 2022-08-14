@@ -40,6 +40,7 @@ impl Typed for Atom {
             Atom::Number(_) => "number",
             Atom::Identifier(_) => "identifier",
             Atom::Symbol(_) => "symbol",
+            Atom::String(_) => "string",
             Atom::Boolean(boolean) => {
                 if *boolean {
                     "true"

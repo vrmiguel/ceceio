@@ -1,11 +1,13 @@
 use nom::{
     branch::alt,
-    bytes::complete::tag,
-    character::complete::{alphanumeric1, digit1, one_of},
+    bytes::complete::{escaped, tag},
+    character::complete::{
+        alphanumeric1, digit1, none_of, one_of,
+    },
     combinator::{cut, not, recognize, value},
     error::context,
     number::complete::double,
-    sequence::{pair, preceded, terminated},
+    sequence::{delimited, pair, preceded, terminated},
     Parser,
 };
 
@@ -25,19 +27,13 @@ pub fn parse_atom(input: &str) -> IResult<Atom> {
             parse_double.map(Atom::Number),
             parse_boolean.map(Atom::Boolean),
             parse_builtin.map(Atom::BuiltIn),
-            parse_symbol.map(SmallString::new).map(Atom::Symbol),
             value(Atom::Nil, tag("nil")),
+            parse_symbol.map(SmallString::new).map(Atom::Symbol),
+            parse_string.map(SmallString::new).map(Atom::String),
             parse_identifier
                 .map(SmallString::new)
                 .map(Atom::Identifier),
         )),
-    )(input)
-}
-
-fn parse_symbol(input: &str) -> IResult<&str> {
-    context(
-        "symbol",
-        preceded(tag(":"), cut(parse_identifier)),
     )(input)
 }
 
@@ -52,6 +48,13 @@ pub fn parse_identifier(input: &str) -> IResult<&str> {
     not(parse_reserved_word)(input)?;
 
     Ok((rest, identifier))
+}
+
+fn parse_symbol(input: &str) -> IResult<&str> {
+    context(
+        "symbol",
+        preceded(tag(":"), cut(parse_identifier)),
+    )(input)
 }
 
 #[inline(always)]
@@ -127,9 +130,16 @@ fn parse_double(input: &str) -> IResult<f64> {
     double(input)
 }
 
+fn parse_string(input: &str) -> IResult<&str> {
+    let esc = escaped(none_of("\\\""), '\\', tag("\""));
+    let esc_or_empty = alt((esc, tag("")));
+
+    delimited(tag("\""), esc_or_empty, tag("\""))(input)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::parse_double;
+    use super::{parse_double, parse_string};
     use crate::{
         expression::{elements::Atom, BuiltIn},
         parser::atom::{
@@ -254,6 +264,24 @@ mod tests {
         // `fn` is a reserved word so this must fail
         assert!(parse_identifier("fn").is_err());
         assert!(parse_identifier("fnn").is_ok());
+    }
+
+    #[test]
+    fn parses_strings() {
+        assert_eq!(parse_string("\"hey\""), Ok(("", "hey")));
+
+        assert_eq!(
+            parse_string("\"hello world\" hello"),
+            Ok((" hello", "hello world"))
+        );
+
+        assert_eq!(
+            parse_string("\"hello \\\"world\" hello"),
+            Ok((" hello", "hello \\\"world"))
+        );
+
+        assert!(parse_string("\"missing closing quote").is_err());
+        assert!(parse_string("missing opening quote\"").is_err());
     }
 
     #[test]

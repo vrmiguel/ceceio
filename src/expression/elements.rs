@@ -62,6 +62,7 @@ pub enum Atom {
     /// `true` or `false`
     Boolean(bool),
     BuiltIn(BuiltIn),
+    String(SmallString),
     Nil,
 }
 
@@ -74,6 +75,7 @@ impl Display for Atom {
             Atom::Number(num) => write!(f, "{num}"),
             Atom::Symbol(symbol) => write!(f, ":{symbol}"),
             Atom::Boolean(boolean) => write!(f, "{boolean}"),
+            Atom::String(string) => write!(f, "\"{string}\""),
             Atom::BuiltIn(built_in) => {
                 f.write_str(built_in.rough_type())
             }
