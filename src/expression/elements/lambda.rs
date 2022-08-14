@@ -83,7 +83,7 @@ impl Lambda {
 
 #[cfg(test)]
 mod tests {
-    use crate::Interpreter;
+    use crate::{Atom, BuiltIn, Expression, Interpreter};
 
     #[test]
     /// Evaluates "atomic" lambdas: that is, lambdas that just
@@ -119,6 +119,26 @@ mod tests {
                 .unwrap(),
             true.into()
         );
+    }
+
+    #[test]
+    #[ignore = "used only for quick benchmarks"]
+    fn stress_test() {
+        let mut interp = Interpreter::new();
+
+        assert!(interp
+            .parse_and_eval("(def even? (fn [x] (= (% x 2) 0)))")
+            .is_ok());
+
+        for n in -20000..500000 {
+            let is_even = n % 2 == 0;
+            let line = format!("(even? {n})");
+
+            assert_eq!(
+                interp.parse_and_eval(&line),
+                Ok(is_even.into())
+            );
+        }
     }
 
     #[test]
@@ -194,6 +214,45 @@ mod tests {
         assert_eq!(
             interp.parse_and_eval("(unwrap-or nil 2)").unwrap(),
             2.0.into()
+        );
+
+        assert_eq!(
+            interp.parse_and_eval("(unwrap-or + -)").unwrap(),
+            Expression::Atom(Atom::BuiltIn(BuiltIn::Plus))
+        );
+
+        assert!(interp
+            .parse_and_eval(
+                "(def zero-or-nil (fn [n] (if (= n 0) n)))"
+            )
+            .is_ok());
+
+        assert_eq!(
+            interp.parse_and_eval("(zero-or-nil 5.0)").unwrap(),
+            Expression::default()
+        );
+
+        assert_eq!(
+            interp.parse_and_eval("(zero-or-nil 0.0)").unwrap(),
+            0.0.into()
+        );
+
+        assert_eq!(
+            interp
+                .parse_and_eval(
+                    "(unwrap-or (zero-or-nil 0.0) 5.0)"
+                )
+                .unwrap(),
+            0.0.into()
+        );
+
+        assert_eq!(
+            interp
+                .parse_and_eval(
+                    "(unwrap-or (zero-or-nil 3.0) 5.0)"
+                )
+                .unwrap(),
+            5.0.into()
         );
     }
 
