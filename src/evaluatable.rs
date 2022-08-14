@@ -131,6 +131,23 @@ impl Evaluable for Expression {
     }
 }
 
+// TODO: transform this into a trait
+pub fn resolve_argument(
+    identifier: &SmallString,
+    fn_arguments: &[SmallString],
+    received_arguments: &[Expression],
+    env: &mut Env,
+) -> Result<Expression> {
+    let idx = fn_arguments
+        .iter()
+        .position(|arg| arg == identifier)
+        .ok_or_else(|| {
+            Error::UnknownSymbol(identifier.clone())
+        })?;
+
+    received_arguments[idx].clone().evaluate(env)
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Env, Evaluable};

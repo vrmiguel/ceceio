@@ -2,8 +2,8 @@ use std::mem;
 
 use super::Application;
 use crate::{
-    ensure_exact_arity, Atom, Env, Error, Evaluable, Expression,
-    Result, SmallString,
+    ensure_exact_arity, evaluatable::resolve_argument, Atom,
+    Env, Error, Evaluable, Expression, Result, SmallString,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -25,7 +25,7 @@ impl Application {
                 Expression::Atom(Atom::Identifier(
                     identifier,
                 )) => {
-                    *expression = Lambda::resolve_argument(
+                    *expression = resolve_argument(
                         identifier,
                         fn_arguments,
                         received_arguments,
@@ -96,33 +96,18 @@ impl Lambda {
                 )?;
                 app.evaluate(env)
             }
-            Expression::If(mut if_expr) => {
-                if let Expression::Atom(Atom::Identifier(
-                    ref identifier,
-                )) = if_expr.condition
-                {
-                    if_expr.condition = Self::resolve_argument(
-                        identifier,
-                        &self.arguments,
-                        &received_arguments,
-                        env,
-                    )?;
-                }
-                if let Expression::Atom(Atom::Identifier(
-                    ref identifier,
-                )) = if_expr.do_this
-                {
-                    if_expr.do_this = Self::resolve_argument(
-                        identifier,
-                        &self.arguments,
-                        &received_arguments,
-                        env,
-                    )?;
-                }
-
-                if_expr.evaluate(env)
-            }
-            Expression::IfElse(_if_else_expr) => todo!(),
+            Expression::If(if_expr) => if_expr
+                .resolve_identifiers_and_eval(
+                    &self.arguments,
+                    &received_arguments,
+                    env,
+                ),
+            Expression::IfElse(if_else_expr) => if_else_expr
+                .resolve_identifiers_and_eval(
+                    &self.arguments,
+                    &received_arguments,
+                    env,
+                ),
             Expression::Binding(binding) => {
                 binding.evaluate(env)
             }
@@ -130,23 +115,6 @@ impl Lambda {
                 lambda.apply(received_arguments, env)
             }
         }
-    }
-
-    // TODO: transform this into a trait
-    fn resolve_argument(
-        identifier: &SmallString,
-        fn_arguments: &[SmallString],
-        received_arguments: &[Expression],
-        env: &mut Env,
-    ) -> Result<Expression> {
-        let idx = fn_arguments
-            .iter()
-            .position(|arg| arg == identifier)
-            .ok_or_else(|| {
-                Error::UnknownSymbol(identifier.clone())
-            })?;
-
-        received_arguments[idx].clone().evaluate(env)
     }
 }
 
