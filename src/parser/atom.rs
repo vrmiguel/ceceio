@@ -1,6 +1,6 @@
 use nom::{
     branch::alt,
-    bytes::complete::{escaped, tag},
+    bytes::complete::{escaped, tag, take_while1},
     character::complete::{
         alphanumeric1, digit1, none_of, one_of,
     },
@@ -38,11 +38,16 @@ pub fn parse_atom(input: &str) -> IResult<Atom> {
 }
 
 pub fn parse_identifier(input: &str) -> IResult<&str> {
+    let acceptable_chars = |ch: char| {
+        ch.is_ascii_alphanumeric()
+            || matches!(ch, '-' | '_' | '?')
+    };
+
     let (rest, identifier) = recognize(pair(
         // Ensure that the identifier doesn't start with a
         // digit
         not(digit1),
-        alphanumeric1,
+        take_while1(acceptable_chars),
     ))(input)?;
 
     not(parse_reserved_word)(input)?;
@@ -264,6 +269,16 @@ mod tests {
         // `fn` is a reserved word so this must fail
         assert!(parse_identifier("fn").is_err());
         assert!(parse_identifier("fnn").is_ok());
+
+        assert_eq!(
+            parse_identifier("even? 123"),
+            Ok((" 123", "even?"))
+        );
+
+        assert_eq!(
+            parse_identifier("is-even? 123"),
+            Ok((" 123", "is-even?"))
+        );
     }
 
     #[test]

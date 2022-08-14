@@ -37,23 +37,12 @@ Simple and embeddable Lisp-like scripting language. Just a work-in-progress test
     );
 
     assert!(interp
-        .parse_and_eval("(def ok (fn [] :ok))")
-        .is_ok());
-
-    assert_eq!(
-        interp.parse_and_eval("(= (ok) :ok)").unwrap(),
-        true.into()
-    );
-
-    assert!(interp
         .parse_and_eval("(def id (fn [x] x))")
         .is_ok());
-
     assert_eq!(
         interp.parse_and_eval("(= (id 2) 2)").unwrap(),
         true.into()
     );
-
     assert_eq!(
         interp
             .parse_and_eval("(= (id :success) :success)")
@@ -64,23 +53,20 @@ Simple and embeddable Lisp-like scripting language. Just a work-in-progress test
     assert!(interp
         .parse_and_eval("(def double (fn [x] (+ x x)))")
         .is_ok());
-
     assert_eq!(
         interp.parse_and_eval("(= (double 2) (* 4 1))").unwrap(),
         true.into()
     );
 
     assert!(interp
-        .parse_and_eval("(def even (fn [x] (= (% x 2) 0)))")
+        .parse_and_eval("(def is-even? (fn [x] (= (% x 2) 0)))")
         .is_ok());
-
     assert_eq!(
-        interp.parse_and_eval("(even 2)").unwrap(),
+        interp.parse_and_eval("(is-even? 2)").unwrap(),
         true.into()
     );
-
     assert_eq!(
-        interp.parse_and_eval("(even 3)").unwrap(),
+        interp.parse_and_eval("(is-even? 3)").unwrap(),
         false.into()
     );
 ```

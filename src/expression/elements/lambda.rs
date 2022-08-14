@@ -151,7 +151,7 @@ mod tests {
     use crate::Interpreter;
 
     #[test]
-    fn evaluates_atomic_lambdas() {
+    fn evaluates_lambdas() {
         let mut interp = Interpreter::new();
 
         assert!(interp
@@ -181,6 +181,22 @@ mod tests {
                 )
                 .unwrap(),
             true.into()
+        );
+
+        assert!(interp
+            .parse_and_eval(
+                "(def is-even? (fn [x] (= (% x 2) 0)))"
+            )
+            .is_ok());
+
+        assert_eq!(
+            interp.parse_and_eval("(is-even? 2)").unwrap(),
+            true.into()
+        );
+
+        assert_eq!(
+            interp.parse_and_eval("(is-even? 3)").unwrap(),
+            false.into()
         );
     }
 
