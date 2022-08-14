@@ -1,3 +1,9 @@
+use std::{
+    fs::File,
+    io::{self, BufReader},
+    path::Path,
+};
+
 use ceceio::Interpreter;
 
 fn main() {
@@ -89,10 +95,46 @@ fn main() {
         8.0.into()
     );
 
-    let arg = std::env::args().nth(1).unwrap();
+    let mut reader =
+        ReallocBufReader::from("example.cec").unwrap();
 
-    match interp.parse_and_eval(&arg) {
-        Ok(expr) => println!("{expr}"),
-        Err(err) => println!("{err}"),
+    while let Some(line) = reader.read_line().unwrap() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+
+        match interp.parse_and_eval(line) {
+            Ok(expr) => {
+                println!("{line} -> {expr}")
+            }
+            Err(err) => eprintln!("{err}"),
+        }
+    }
+}
+
+struct ReallocBufReader {
+    reader: BufReader<File>,
+    buffer: String,
+}
+
+impl ReallocBufReader {
+    pub fn from<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+        let file = File::open(path).unwrap();
+        let reader = BufReader::new(file);
+        let buffer = String::with_capacity(1024);
+
+        Ok(Self { reader, buffer })
+    }
+
+    pub fn read_line(&mut self) -> io::Result<Option<&str>> {
+        use std::io::BufRead;
+
+        self.buffer.clear();
+
+        let bytes_read =
+            self.reader.read_line(&mut self.buffer)?;
+
+        Ok((bytes_read != 0).then(|| self.buffer.as_str()))
     }
 }

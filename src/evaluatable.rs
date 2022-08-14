@@ -171,26 +171,22 @@ mod tests {
 
     #[test]
     fn evaluates_bindings() {
-        // TODO: ensure these following cases fail
-        // assert!(parse_expression("(def)").is_err());
-        // assert!(parse_expression("(def x)").is_err());
-        // assert!(parse_expression("(def 2 2)").is_err());
+        let mut interp = Interpreter::new();
+        assert!(parse_expression("(def)").is_err());
+        assert!(parse_expression("(def x)").is_err());
+        assert!(parse_expression("(def 2 2)").is_err());
 
-        let mut env = Env::default();
         assert_eq!(
-            parse_and_eval_with_env("(def five 5.0)", &mut env)
-                .unwrap(),
+            interp.parse_and_eval("(def five 5.0)").unwrap(),
             Expression::Atom(Atom::Number(5.0))
         );
 
         assert_eq!(
             // Ensure that we can retrieve previous bindings
             // from our env
-            parse_and_eval_with_env(
-                "(def six (+ five 1.0))",
-                &mut env
-            )
-            .unwrap(),
+            interp
+                .parse_and_eval("(def six (+ five 1.0))",)
+                .unwrap(),
             Expression::Atom(Atom::Number(6.0))
         );
     }
