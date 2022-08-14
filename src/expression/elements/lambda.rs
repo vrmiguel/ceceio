@@ -1,3 +1,5 @@
+use std::mem;
+
 use super::Application;
 use crate::{
     ensure_exact_arity, Atom, Env, Error, Evaluable, Expression,
@@ -11,6 +13,7 @@ pub struct Lambda {
 }
 
 impl Application {
+    /// Resolve all symbols in this application
     pub fn resolve_all(
         &mut self,
         fn_arguments: &[SmallString],
@@ -22,15 +25,16 @@ impl Application {
                 Expression::Atom(Atom::Identifier(
                     identifier,
                 )) => {
-                    // TODO: figure out a way of taking
-                    // ownership of the argument instead of
-                    // cloning
                     *expression = Lambda::resolve_argument(
                         identifier,
                         fn_arguments,
                         received_arguments,
                         env,
-                    )?;
+                    )
+                    .or_else(|_| {
+                        let expr = mem::take(expression);
+                        expr.evaluate(env)
+                    })?;
                 }
                 Expression::Application(app) => app
                     .resolve_all(
@@ -196,6 +200,31 @@ mod tests {
 
         assert_eq!(
             interp.parse_and_eval("(is-even? 3)").unwrap(),
+            false.into()
+        );
+
+        assert!(interp
+            .parse_and_eval("(def eight (* 2 2 2))")
+            .is_ok());
+
+        assert_eq!(
+            interp.parse_and_eval("(is-even? eight)").unwrap(),
+            true.into()
+        );
+
+        assert_eq!(
+            interp
+                .parse_and_eval("(is-even? (* eight eight))")
+                .unwrap(),
+            true.into()
+        );
+
+        assert_eq!(
+            interp
+                .parse_and_eval(
+                    "(is-even? (- (* eight eight) 1))"
+                )
+                .unwrap(),
             false.into()
         );
     }

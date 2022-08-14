@@ -82,3 +82,9 @@ impl fmt::Display for Expression {
         }
     }
 }
+
+impl Default for Expression {
+    fn default() -> Self {
+        Expression::Atom(Atom::Nil)
+    }
+}
