@@ -85,6 +85,38 @@ impl Expression {
                     )?
                 }
             }
+            Expression::If(if_expr) => {
+                if_expr.condition.resolve_all(
+                    fn_arguments,
+                    received_arguments,
+                    env,
+                )?;
+
+                if_expr.do_this.resolve_all(
+                    fn_arguments,
+                    received_arguments,
+                    env,
+                )?;
+            }
+            Expression::IfElse(if_else) => {
+                if_else.condition.resolve_all(
+                    fn_arguments,
+                    received_arguments,
+                    env,
+                )?;
+
+                if_else.if_true.resolve_all(
+                    fn_arguments,
+                    received_arguments,
+                    env,
+                )?;
+
+                if_else.if_false.resolve_all(
+                    fn_arguments,
+                    received_arguments,
+                    env,
+                )?;
+            }
             _ => {}
         }
 

@@ -86,7 +86,7 @@ fn main() {
 
     assert_eq!(
         interp.parse_and_eval("(double-if-even 4)").unwrap(),
-        3.0.into()
+        8.0.into()
     );
 
     let arg = std::env::args().nth(1).unwrap();

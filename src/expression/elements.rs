@@ -5,8 +5,7 @@ mod lambda;
 pub use lambda::Lambda;
 
 use crate::{
-    evaluatable::resolve_argument, BuiltIn, CheapClone, Env,
-    Evaluable, Expression, Result, SmallString, Typed,
+    BuiltIn, CheapClone, Expression, SmallString, Typed,
 };
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -39,40 +38,6 @@ pub struct If {
     pub do_this: Expression,
 }
 
-impl If {
-    pub fn resolve_identifiers_and_eval(
-        mut self,
-        fn_arguments: &[SmallString],
-        received_arguments: &[Expression],
-        env: &mut Env,
-    ) -> Result<Expression> {
-        if let Expression::Atom(Atom::Identifier(
-            ref identifier,
-        )) = self.condition
-        {
-            self.condition = resolve_argument(
-                identifier,
-                fn_arguments,
-                received_arguments,
-                env,
-            )?;
-        }
-        if let Expression::Atom(Atom::Identifier(
-            ref identifier,
-        )) = self.do_this
-        {
-            self.do_this = resolve_argument(
-                identifier,
-                fn_arguments,
-                received_arguments,
-                env,
-            )?;
-        }
-
-        self.evaluate(env)
-    }
-}
-
 /// Represents an `if` predicate
 /// with an `else` clause
 #[derive(Debug, PartialEq, Clone)]
@@ -80,37 +45,6 @@ pub struct IfElse {
     pub condition: Expression,
     pub if_true: Expression,
     pub if_false: Expression,
-}
-
-impl IfElse {
-    pub fn resolve_identifiers_and_eval(
-        mut self,
-        fn_arguments: &[SmallString],
-        received_arguments: &[Expression],
-        env: &mut Env,
-    ) -> Result<Expression> {
-        println!("{self}");
-
-        self.condition.resolve_all(
-            fn_arguments,
-            received_arguments,
-            env,
-        )?;
-
-        self.if_true.resolve_all(
-            fn_arguments,
-            received_arguments,
-            env,
-        )?;
-
-        self.if_false.resolve_all(
-            fn_arguments,
-            received_arguments,
-            env,
-        )?;
-
-        dbg!(self.evaluate(env))
-    }
 }
 
 // CheapClone since `SmallString` is

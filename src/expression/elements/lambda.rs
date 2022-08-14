@@ -55,18 +55,22 @@ impl Lambda {
                 )?;
                 self.body.evaluate(env)
             }
-            Expression::If(if_expr) => if_expr
-                .resolve_identifiers_and_eval(
+            Expression::If(_) => {
+                self.body.resolve_all(
                     &self.arguments,
                     &received_arguments,
                     env,
-                ),
-            Expression::IfElse(if_else_expr) => if_else_expr
-                .resolve_identifiers_and_eval(
+                )?;
+                self.body.evaluate(env)
+            }
+            Expression::IfElse(_) => {
+                self.body.resolve_all(
                     &self.arguments,
                     &received_arguments,
                     env,
-                ),
+                )?;
+                self.body.evaluate(env)
+            }
             Expression::Binding(binding) => {
                 binding.evaluate(env)
             }
