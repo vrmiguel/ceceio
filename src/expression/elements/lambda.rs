@@ -1,9 +1,6 @@
-use std::mem;
-
-use super::Application;
 use crate::{
-    ensure_exact_arity, evaluatable::resolve_argument, Atom,
-    Env, Error, Evaluable, Expression, Result, SmallString,
+    ensure_exact_arity, Atom, Env, Error, Evaluable, Expression,
+    Result, SmallString,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -12,47 +9,9 @@ pub struct Lambda {
     pub body: Expression,
 }
 
-impl Application {
-    /// Resolve all symbols in this application
-    pub fn resolve_all(
-        &mut self,
-        fn_arguments: &[SmallString],
-        received_arguments: &[Expression],
-        env: &mut Env,
-    ) -> Result<()> {
-        for expression in self.arguments.iter_mut() {
-            match expression {
-                Expression::Atom(Atom::Identifier(
-                    identifier,
-                )) => {
-                    *expression = resolve_argument(
-                        identifier,
-                        fn_arguments,
-                        received_arguments,
-                        env,
-                    )
-                    .or_else(|_| {
-                        let expr = mem::take(expression);
-                        expr.evaluate(env)
-                    })?;
-                }
-                Expression::Application(app) => app
-                    .resolve_all(
-                        fn_arguments,
-                        received_arguments,
-                        env,
-                    )?,
-                _ => {}
-            }
-        }
-
-        Ok(())
-    }
-}
-
 impl Lambda {
     pub fn apply(
-        self,
+        mut self,
         mut received_arguments: Vec<Expression>,
         env: &mut Env,
     ) -> Result<Expression> {
@@ -86,15 +45,15 @@ impl Lambda {
                 // them. E.g.: `(fn [] 3)`
                 Ok(Expression::Atom(atom))
             }
-            Expression::Application(mut app) => {
+            Expression::Application(_) => {
                 // Resolve all identifiers (recursively, if there
                 // are applications within this one)
-                app.resolve_all(
+                self.body.resolve_all(
                     &self.arguments,
                     &received_arguments,
                     env,
                 )?;
-                app.evaluate(env)
+                self.body.evaluate(env)
             }
             Expression::If(if_expr) => if_expr
                 .resolve_identifiers_and_eval(
@@ -123,7 +82,9 @@ mod tests {
     use crate::Interpreter;
 
     #[test]
-    fn evaluates_lambdas() {
+    /// Evaluates "atomic" lambdas: that is, lambdas that just
+    /// return an atom
+    fn evaluates_atomic_lambdas() {
         let mut interp = Interpreter::new();
 
         assert!(interp
@@ -154,44 +115,47 @@ mod tests {
                 .unwrap(),
             true.into()
         );
+    }
+
+    #[test]
+    /// Evaluates lambdas that consist of a built-in numeric
+    /// operation
+    fn evaluates_numeric_lambdas() {
+        let mut interp = Interpreter::new();
 
         assert!(interp
-            .parse_and_eval(
-                "(def is-even? (fn [x] (= (% x 2) 0)))"
-            )
+            .parse_and_eval("(def even? (fn [x] (= (% x 2) 0)))")
             .is_ok());
 
-        assert_eq!(
-            interp.parse_and_eval("(is-even? 2)").unwrap(),
-            true.into()
-        );
+        for n in -200..500 {
+            let is_even = n % 2 == 0;
+            let line = format!("(even? {n})");
 
-        assert_eq!(
-            interp.parse_and_eval("(is-even? 3)").unwrap(),
-            false.into()
-        );
+            assert_eq!(
+                interp.parse_and_eval(&line),
+                Ok(is_even.into())
+            );
+        }
 
         assert!(interp
             .parse_and_eval("(def eight (* 2 2 2))")
             .is_ok());
 
         assert_eq!(
-            interp.parse_and_eval("(is-even? eight)").unwrap(),
+            interp.parse_and_eval("(even? eight)").unwrap(),
             true.into()
         );
 
         assert_eq!(
             interp
-                .parse_and_eval("(is-even? (* eight eight))")
+                .parse_and_eval("(even? (* eight eight))")
                 .unwrap(),
             true.into()
         );
 
         assert_eq!(
             interp
-                .parse_and_eval(
-                    "(is-even? (- (* eight eight) 1))"
-                )
+                .parse_and_eval("(even? (- (* eight eight) 1))")
                 .unwrap(),
             false.into()
         );
@@ -209,6 +173,23 @@ mod tests {
                 )
                 .unwrap(),
             true.into()
+        );
+    }
+
+    #[test]
+    /// Evaluates lambdas that consist of a conditional
+    fn evaluates_branching_lambdas() {
+        let mut interp = Interpreter::new();
+
+        assert!(interp
+            .parse_and_eval(
+                "(def unwrap-or (fn [maybe-nil fallback] (if (= maybe-nil nil) fallback maybe-nil)))"
+            )
+            .is_ok());
+
+        assert_eq!(
+            interp.parse_and_eval("(unwrap-or nil 2)").unwrap(),
+            2.0.into()
         );
     }
 

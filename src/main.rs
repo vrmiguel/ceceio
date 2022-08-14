@@ -80,12 +80,12 @@ fn main() {
 
     assert!(interp
         .parse_and_eval(
-            "(def double-if-even (fn [x] (if (even? x) (* x 2) x)))"
+            "(def double-if-even (fn [x] (if (even? x) (* x 2))))"
         )
         .is_ok());
 
     assert_eq!(
-        interp.parse_and_eval("(double-if-even 3)").unwrap(),
+        interp.parse_and_eval("(double-if-even 4)").unwrap(),
         3.0.into()
     );
 

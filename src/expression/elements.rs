@@ -89,41 +89,27 @@ impl IfElse {
         received_arguments: &[Expression],
         env: &mut Env,
     ) -> Result<Expression> {
-        if let Expression::Atom(Atom::Identifier(
-            ref identifier,
-        )) = self.condition
-        {
-            self.condition = resolve_argument(
-                identifier,
-                fn_arguments,
-                received_arguments,
-                env,
-            )?;
-        }
-        if let Expression::Atom(Atom::Identifier(
-            ref identifier,
-        )) = self.if_true
-        {
-            self.if_true = resolve_argument(
-                identifier,
-                fn_arguments,
-                received_arguments,
-                env,
-            )?;
-        }
-        if let Expression::Atom(Atom::Identifier(
-            ref identifier,
-        )) = self.if_false
-        {
-            self.if_false = resolve_argument(
-                identifier,
-                fn_arguments,
-                received_arguments,
-                env,
-            )?;
-        }
+        println!("{self}");
 
-        self.evaluate(env)
+        self.condition.resolve_all(
+            fn_arguments,
+            received_arguments,
+            env,
+        )?;
+
+        self.if_true.resolve_all(
+            fn_arguments,
+            received_arguments,
+            env,
+        )?;
+
+        self.if_false.resolve_all(
+            fn_arguments,
+            received_arguments,
+            env,
+        )?;
+
+        dbg!(self.evaluate(env))
     }
 }
 
@@ -189,6 +175,19 @@ impl Display for Application {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         write!(f, "<function {}> ", self.name)
+    }
+}
+
+impl Display for IfElse {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        write!(
+            f,
+            "(if {} {} {})",
+            self.condition, self.if_true, self.if_false
+        )
     }
 }
 

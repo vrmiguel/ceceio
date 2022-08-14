@@ -13,10 +13,8 @@ pub enum SmallString {
 
 impl fmt::Debug for SmallString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SmallString")
-            .field("is_in_heap", &self.is_in_heap())
-            .field("value", &self.as_str())
-            .finish()
+        // `s#` prefix -to flag that this is a SmallString
+        write!(f, "s#\"{self}\"")
     }
 }
 

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, mem};
 
 pub mod builtin;
 pub mod elements;
@@ -8,7 +8,10 @@ pub use builtin::BuiltIn;
 use self::elements::{
     Application, Atom, Binding, If, IfElse, Lambda,
 };
-use crate::{Error, Result, Typed};
+use crate::{
+    evaluatable::resolve_argument, Env, Error, Evaluable,
+    Result, SmallString, Typed,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
@@ -52,6 +55,40 @@ impl Expression {
                 received: self.rough_type(),
             })
         }
+    }
+
+    pub fn resolve_all(
+        &mut self,
+        fn_arguments: &[SmallString],
+        received_arguments: &[Expression],
+        env: &mut Env,
+    ) -> Result<()> {
+        match self {
+            Expression::Atom(Atom::Identifier(identifier)) => {
+                *self = resolve_argument(
+                    identifier,
+                    fn_arguments,
+                    received_arguments,
+                    env,
+                )
+                .or_else(|_| {
+                    let expr = mem::take(self);
+                    expr.evaluate(env)
+                })?;
+            }
+            Expression::Application(app) => {
+                for expression in app.arguments.iter_mut() {
+                    expression.resolve_all(
+                        fn_arguments,
+                        received_arguments,
+                        env,
+                    )?
+                }
+            }
+            _ => {}
+        }
+
+        Ok(())
     }
 }
 
