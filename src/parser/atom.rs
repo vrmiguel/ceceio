@@ -175,6 +175,13 @@ mod tests {
             parse_atom("+"),
             Ok(("", Atom::BuiltIn(BuiltIn::Plus)))
         );
+
+        assert_eq!(parse_atom("nil"), Ok(("", Atom::Nil)));
+
+        assert_eq!(
+            parse_atom("\"hey\""),
+            Ok(("", Atom::String(SmallString::new("hey"))))
+        );
     }
 
     #[test]

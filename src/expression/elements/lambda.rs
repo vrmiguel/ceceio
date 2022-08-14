@@ -227,6 +227,21 @@ mod tests {
                 .unwrap(),
             false.into()
         );
+
+        assert!(interp
+            .parse_and_eval(
+                "(def times-eight (fn [y] (* eight y)))"
+            )
+            .is_ok());
+
+        assert_eq!(
+            interp
+                .parse_and_eval(
+                    "(= (times-eight 2) (* 2 2 2 2))"
+                )
+                .unwrap(),
+            true.into()
+        );
     }
 
     #[test]

@@ -77,7 +77,7 @@ impl Display for Atom {
             Atom::Boolean(boolean) => write!(f, "{boolean}"),
             Atom::String(string) => write!(f, "\"{string}\""),
             Atom::BuiltIn(built_in) => {
-                f.write_str(built_in.rough_type())
+                write!(f, "<function {}>", built_in.rough_type())
             }
             Atom::Identifier(identifier) => {
                 f.write_str(identifier)
