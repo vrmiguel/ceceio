@@ -1,3 +1,4 @@
+use super::Application;
 use crate::{
     ensure_exact_arity, Atom, Env, Error, Evaluable, Expression,
     Result, SmallString,
@@ -7,6 +8,42 @@ use crate::{
 pub struct Lambda {
     pub arguments: Vec<SmallString>,
     pub body: Expression,
+}
+
+impl Application {
+    pub fn resolve_all(
+        &mut self,
+        fn_arguments: &[SmallString],
+        received_arguments: &[Expression],
+        env: &mut Env,
+    ) -> Result<()> {
+        for expression in self.arguments.iter_mut() {
+            match expression {
+                Expression::Atom(Atom::Identifier(
+                    identifier,
+                )) => {
+                    // TODO: figure out a way of taking
+                    // ownership of the argument instead of
+                    // cloning
+                    *expression = Lambda::resolve_argument(
+                        identifier,
+                        fn_arguments,
+                        received_arguments,
+                        env,
+                    )?;
+                }
+                Expression::Application(app) => app
+                    .resolve_all(
+                        fn_arguments,
+                        received_arguments,
+                        env,
+                    )?,
+                _ => {}
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl Lambda {
@@ -46,23 +83,13 @@ impl Lambda {
                 Ok(Expression::Atom(atom))
             }
             Expression::Application(mut app) => {
-                for expression in app.arguments.iter_mut() {
-                    if let Expression::Atom(Atom::Identifier(
-                        identifier,
-                    )) = expression
-                    {
-                        // TODO: figure out a way of taking
-                        // ownership of the argument instead of
-                        // cloning
-                        *expression = Self::resolve_argument(
-                            identifier,
-                            &self.arguments,
-                            &received_arguments,
-                            env,
-                        )?;
-                    }
-                }
-
+                // Resolve all identifiers (recursively, if there
+                // are applications within this one)
+                app.resolve_all(
+                    &self.arguments,
+                    &received_arguments,
+                    env,
+                )?;
                 app.evaluate(env)
             }
             Expression::If(mut if_expr) => {
@@ -101,6 +128,7 @@ impl Lambda {
         }
     }
 
+    // TODO: transform this into a trait
     fn resolve_argument(
         identifier: &SmallString,
         fn_arguments: &[SmallString],
