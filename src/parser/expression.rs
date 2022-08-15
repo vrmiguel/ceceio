@@ -154,15 +154,13 @@ fn parse_application(input: &str) -> IResult<Application> {
     Ok((rest, Application { name, arguments }))
 }
 
-fn parse_cond(
-    input: &str,
-) -> IResult<Vec<(Expression, Expression)>> {
+fn parse_cond(input: &str) -> IResult<Vec<Expression>> {
     fn parse_cond_inner(
         input: &str,
-    ) -> IResult<Vec<(Expression, Expression)>> {
+    ) -> IResult<Vec<Expression>> {
         let (rest, _) = tag("cond")(input)?;
 
-        many0(tuple((parse_expression, parse_expression)))(rest)
+        many0(parse_expression)(rest)
     }
 
     parse_parenthesis_enclosed(parse_cond_inner)(input)
@@ -460,10 +458,10 @@ mod tests {
             parse_cond("(cond true 2)"),
             Ok((
                 "",
-                vec![(
+                vec![
                     Expression::Atom(Atom::Boolean(true)),
                     2.0.into()
-                )]
+                ]
             ))
         );
 
@@ -472,19 +470,14 @@ mod tests {
             Ok((
                 "",
                 vec![
-                    (
-                        Expression::Atom(Atom::Boolean(false)),
-                        2.0.into()
-                    ),
-                    (
-                        Expression::Atom(Atom::Boolean(true)),
-                        5.0.into()
-                    )
+                    Expression::Atom(Atom::Boolean(false)),
+                    2.0.into(),
+                    Expression::Atom(Atom::Boolean(true)),
+                    5.0.into()
                 ]
             ))
         );
 
-        // Fails because we don't yet support odd-length conds
-        assert!(parse_cond("(cond false 2 true)").is_err());
+        assert!(parse_cond("(cond false 2 true)").is_ok());
     }
 }

@@ -135,23 +135,45 @@ impl Evaluable for Expression {
 }
 
 fn eval_cond(
-    pairs: Vec<(Expression, Expression)>,
+    mut expressions: Vec<Expression>,
     env: &mut Env,
 ) -> Result<Expression> {
-    // TODO: add odd-length verification and support
-    for (condition, then) in pairs {
-        let cond = matches!(
+    if expressions.is_empty() {
+        return Ok(Expression::default());
+    }
+
+    // We have a default branch if this `cond` expression
+    // has odd length
+    let has_default_branch = expressions.len() % 2 == 1;
+    // Safety: we've checked above that `expressions` is not
+    // empty, therefore this will not fail
+    let default_branch =
+        has_default_branch.then(|| expressions.pop().unwrap());
+
+    let mut expressions = expressions.into_iter();
+
+    while let Some(condition) = expressions.next() {
+        // TODO: convert to If here and evaluate it?
+        let evaluated_cond = matches!(
             condition.evaluate(env)?,
             Expression::Atom(Atom::Boolean(true))
         );
 
-        if cond {
+        // Safety: we know `expressions` has even length,
+        // therefore this unwrap won't fail
+        let then = expressions.next().unwrap();
+        if evaluated_cond {
             return then.evaluate(env);
         }
     }
 
-    // Nothing evaluated to true, so we'll return nil
-    Ok(Expression::default())
+    match default_branch {
+        Some(default) => default.evaluate(env),
+        None => {
+            // Nothing evaluated to true, so we'll return nil
+            Ok(Expression::default())
+        }
+    }
 }
 
 // TODO: transform this into a trait
@@ -509,6 +531,31 @@ mod tests {
                 )
                 .unwrap(),
             false.into()
+        );
+
+        assert_eq!(
+            interp
+                .parse_and_eval(
+                    "(cond false (* 4 2) false false true)"
+                )
+                .unwrap(),
+            true.into()
+        );
+
+        assert!(interp
+            .parse_and_eval(
+                "(def fibonacci 
+                    (fn [n] 
+                        (cond 
+                            (= n 0) 1
+                            (= n 1) 1
+                            (+ (fibonacci (- n 1)) (fibonacci (- n 2))))))",
+            )
+            .is_ok());
+
+        assert_eq!(
+            interp.parse_and_eval("(fibonacci 5)").unwrap(),
+            8.0.into()
         );
     }
 }

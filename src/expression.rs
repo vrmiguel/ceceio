@@ -20,7 +20,7 @@ use crate::{
 pub enum Expression {
     Atom(Atom),
     Application(Application),
-    Cond(Vec<(Expression, Expression)>),
+    Cond(Vec<Expression>),
     If(Box<If>),
     IfElse(Box<IfElse>),
     Binding(Box<Binding>),
@@ -82,13 +82,7 @@ impl Expression {
             }
             Expression::Cond(conditions) => {
                 for cond in conditions.iter_mut() {
-                    cond.0.resolve_all(
-                        fn_arguments,
-                        received_arguments,
-                        env,
-                    )?;
-
-                    cond.1.resolve_all(
+                    cond.resolve_all(
                         fn_arguments,
                         received_arguments,
                         env,
