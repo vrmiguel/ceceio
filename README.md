@@ -9,6 +9,21 @@ Simple and embeddable Lisp-like scripting language. Just a work-in-progress test
 
     let mut interp = Interpreter::new();
 
+    assert!(interp
+        .parse_and_eval(
+            "(def fibonacci 
+                (fn [n] 
+                    (cond 
+                        (= n 0) 1
+                        (= n 1) 1
+                        (+ (fibonacci (- n 1)) (fibonacci (- n 2))))))",
+        )
+        .is_ok());
+    assert_eq!(
+        interp.parse_and_eval("(fibonacci 5)").unwrap(),
+        8.0.into()
+    );
+
     assert_eq!(
         interp.parse_and_eval("(/ (* 2 3) (- 5 6 7))").unwrap(),
         (-0.75).into()
