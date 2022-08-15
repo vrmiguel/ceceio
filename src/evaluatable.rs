@@ -1,7 +1,9 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, hash::BuildHasherDefault};
 
-use rustc_hash::FxHashMap;
+use indexmap::IndexMap;
+use rustc_hash::FxHasher;
 
+// use rustc_hash::FxHasher;
 use crate::{
     expression::elements::{
         Application, Atom, Binding, FnIdentifier, If, IfElse,
@@ -12,7 +14,11 @@ use crate::{
 #[derive(Debug, Default)]
 pub struct Env {
     // Naive WIP representation
-    bindings: FxHashMap<SmallString, Expression>,
+    bindings: IndexMap<
+        SmallString,
+        Expression,
+        BuildHasherDefault<FxHasher>,
+    >,
 }
 
 impl Env {
