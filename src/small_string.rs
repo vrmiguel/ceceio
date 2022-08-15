@@ -11,6 +11,26 @@ pub enum SmallString {
     Heap(Rc<str>),
 }
 
+impl Hash for SmallString {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            SmallString::Inlined { len, buf } => {
+                unsafe { buf.get_unchecked(0..*len as usize) }
+                    .hash(state);
+            }
+            SmallString::Heap(rc) => {
+                // Cold branch since identifiers tend to be
+                // smaller than 23 bytes
+                cold();
+                rc.hash(state);
+            }
+        }
+
+        #[cold]
+        fn cold() {}
+    }
+}
+
 impl fmt::Debug for SmallString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // `s#` prefix -to flag that this is a SmallString
@@ -21,13 +41,6 @@ impl fmt::Debug for SmallString {
 impl fmt::Display for SmallString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.as_str())
-    }
-}
-
-#[allow(clippy::derive_hash_xor_eq)]
-impl Hash for SmallString {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.as_str().hash(state);
     }
 }
 

@@ -3,7 +3,6 @@ use std::{fmt::Debug, hash::BuildHasherDefault};
 use indexmap::IndexMap;
 use rustc_hash::FxHasher;
 
-// use rustc_hash::FxHasher;
 use crate::{
     expression::elements::{
         Application, Atom, Binding, FnIdentifier, If, IfElse,
