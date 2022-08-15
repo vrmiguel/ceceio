@@ -1,4 +1,6 @@
-use std::collections::HashMap;
+use std::fmt::Debug;
+
+use rustc_hash::FxHashMap;
 
 use crate::{
     expression::elements::{
@@ -7,11 +9,10 @@ use crate::{
     Error, Expression, Result, SmallString,
 };
 
-#[allow(unused)]
 #[derive(Debug, Default)]
 pub struct Env {
     // Naive WIP representation
-    bindings: HashMap<SmallString, Expression>,
+    bindings: FxHashMap<SmallString, Expression>,
 }
 
 impl Env {
