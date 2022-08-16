@@ -11,6 +11,7 @@ pub enum SmallString {
     Heap(Rc<str>),
 }
 
+#[allow(clippy::derive_hash_xor_eq)]
 impl Hash for SmallString {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         match self {

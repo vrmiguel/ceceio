@@ -97,8 +97,7 @@ fn main() {
 
     let file = argv::iter().nth(1).unwrap();
 
-    let mut reader =
-        ReallocBufReader::from(file).unwrap();
+    let mut reader = ReallocBufReader::from(file).unwrap();
 
     while let Some(line) = reader.read_line().unwrap() {
         let line = line.trim();
@@ -132,6 +131,6 @@ impl ReallocBufReader {
         let bytes_read =
             self.reader.read_line(&mut self.buffer)?;
 
-        Ok((bytes_read != 0).then(|| self.buffer.as_str()))
+        Ok((bytes_read != 0).then_some(self.buffer.as_str()))
     }
 }
