@@ -1,6 +1,6 @@
 # ceceio
 
-Simple and embeddable Lisp-like scripting language. Just a work-in-progress testbed for now.
+Embeddable tree-walk interpreter for a "mostly lazy" Lisp-like scripting language. Just a work-in-progress testbed for now.
 
 ## Sample usage
 
