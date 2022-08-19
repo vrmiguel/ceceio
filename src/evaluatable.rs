@@ -133,56 +133,11 @@ impl Evaluable for Expression {
             Expression::IfElse(if_else_expr) => {
                 if_else_expr.evaluate(env)
             }
-            Expression::Cond(conditions) => {
-                eval_cond(conditions, env)
-            }
             Expression::List(list) => {
                 // Avoid processing the list until strictly
                 // necessary
                 Ok(Expression::List(list))
             }
-        }
-    }
-}
-
-fn eval_cond(
-    mut expressions: Vec<Expression>,
-    env: &mut Env,
-) -> Result<Expression> {
-    if expressions.is_empty() {
-        return Ok(Expression::default());
-    }
-
-    // We have a default branch if this `cond` expression
-    // has odd length
-    let has_default_branch = expressions.len() % 2 == 1;
-    // Safety: we've checked above that `expressions` is not
-    // empty, therefore this will not fail
-    let default_branch =
-        has_default_branch.then(|| expressions.pop().unwrap());
-
-    let mut expressions = expressions.into_iter();
-
-    while let Some(condition) = expressions.next() {
-        // TODO: convert to If here and evaluate it?
-        let evaluated_cond = matches!(
-            condition.evaluate(env)?,
-            Expression::Atom(Atom::Boolean(true))
-        );
-
-        // Safety: we know `expressions` has even length,
-        // therefore this unwrap won't fail
-        let then = expressions.next().unwrap();
-        if evaluated_cond {
-            return then.evaluate(env);
-        }
-    }
-
-    match default_branch {
-        Some(default) => default.evaluate(env),
-        None => {
-            // Nothing evaluated to true, so we'll return nil
-            Ok(Expression::default())
         }
     }
 }

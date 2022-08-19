@@ -26,6 +26,11 @@ pub enum BuiltIn {
     Or,
     /// "%"
     Remainder,
+    Cond,
+    /// `count`: count how many items
+    /// in a list a given predicate returns
+    /// true to
+    Count,
 }
 
 impl BuiltIn {
@@ -35,41 +40,67 @@ impl BuiltIn {
         env: &mut Env,
     ) -> Result<Expression> {
         let arity_received = args.len() as _;
-        let expressions =
-            args.into_iter().map(|expr| expr.evaluate(env));
 
         match self {
             BuiltIn::Plus => {
+                let expressions = args
+                    .into_iter()
+                    .map(|expr| expr.evaluate(env));
                 Self::acc_numeric(|x, y| x + y, 0., expressions)
             }
             BuiltIn::Minus => {
+                let expressions = args
+                    .into_iter()
+                    .map(|expr| expr.evaluate(env));
                 Self::acc_numeric(|x, y| x - y, 0., expressions)
             }
             BuiltIn::Times => {
+                let expressions = args
+                    .into_iter()
+                    .map(|expr| expr.evaluate(env));
                 Self::acc_numeric(|x, y| x * y, 1., expressions)
             }
             BuiltIn::Divide => {
+                let expressions = args
+                    .into_iter()
+                    .map(|expr| expr.evaluate(env));
                 Self::acc_numeric(|x, y| x / y, 1., expressions)
             }
             BuiltIn::Equal => {
+                let expressions = args
+                    .into_iter()
+                    .map(|expr| expr.evaluate(env));
                 ensure_minimum_arity(2, arity_received)?;
                 Self::equals(expressions)
             }
             BuiltIn::Not => {
+                let expressions = args
+                    .into_iter()
+                    .map(|expr| expr.evaluate(env));
                 // `not` can only be applied to one argument
                 ensure_exact_arity(1, arity_received)?;
                 Self::not(expressions)
             }
             BuiltIn::And => {
+                let expressions = args
+                    .into_iter()
+                    .map(|expr| expr.evaluate(env));
                 ensure_minimum_arity(2, arity_received)?;
                 Self::and(expressions)
             }
             BuiltIn::Or => {
+                let expressions = args
+                    .into_iter()
+                    .map(|expr| expr.evaluate(env));
                 ensure_minimum_arity(2, arity_received)?;
                 Self::or(expressions)
             }
             BuiltIn::Remainder => {
                 ensure_exact_arity(2, arity_received)?;
+
+                let expressions = args
+                    .into_iter()
+                    .map(|expr| expr.evaluate(env));
                 let mut expressions = expressions;
 
                 // Should not fail since we've just checked arity
@@ -79,6 +110,50 @@ impl BuiltIn {
                     expressions.next().unwrap()?.as_number()?;
 
                 Ok((lhs % rhs).into())
+            }
+            BuiltIn::Count => todo!(),
+            BuiltIn::Cond => Self::cond(args, env),
+        }
+    }
+
+    fn cond(
+        mut expressions: Vec<Expression>,
+        env: &mut Env,
+    ) -> Result<Expression> {
+        if expressions.is_empty() {
+            return Ok(Expression::default());
+        }
+
+        // We have a default branch if this `cond` expression
+        // has odd length
+        let has_default_branch = expressions.len() % 2 == 1;
+        // Safety: we've checked above that `expressions` is not
+        // empty, therefore this will not fail
+        let default_branch = has_default_branch
+            .then(|| expressions.pop().unwrap());
+
+        let mut expressions = expressions.into_iter();
+
+        while let Some(condition) = expressions.next() {
+            // TODO: convert to If here and evaluate it?
+            let evaluated_cond = matches!(
+                condition.evaluate(env)?,
+                Expression::Atom(Atom::Boolean(true))
+            );
+
+            // Safety: we know `expressions` has even length,
+            // therefore this unwrap won't fail
+            let then = expressions.next().unwrap();
+            if evaluated_cond {
+                return then.evaluate(env);
+            }
+        }
+
+        match default_branch {
+            Some(default) => default.evaluate(env),
+            None => {
+                // Nothing evaluated to true, so we'll return nil
+                Ok(Expression::default())
             }
         }
     }

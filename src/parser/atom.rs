@@ -80,6 +80,10 @@ fn parse_builtin(input: &str) -> IResult<BuiltIn> {
                 BuiltIn::Or,
                 terminated(tag("or"), not(alphanumeric1)),
             ),
+            value(
+                BuiltIn::Cond,
+                terminated(tag("cond"), not(alphanumeric1)),
+            ),
         )),
     )(input)
 }

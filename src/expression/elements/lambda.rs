@@ -52,8 +52,7 @@ impl Lambda {
             }
             Expression::Application(_)
             | Expression::If(_)
-            | Expression::IfElse(_)
-            | Expression::Cond(_) => {
+            | Expression::IfElse(_) => {
                 self.body.resolve_all(
                     &self.arguments,
                     &received_arguments,

@@ -12,7 +12,6 @@ impl Typed for Expression {
             Expression::List(_) => "list",
             Expression::Lambda(_) => "lambda",
             Expression::Binding(_) => "binding",
-            Expression::Cond(_) => "cond",
             Expression::Atom(atom) => atom.rough_type(),
             Expression::Application(_) => "application",
             Expression::If(_) | Expression::IfElse(_) => "if",
@@ -32,6 +31,8 @@ impl Typed for BuiltIn {
             BuiltIn::And => "and",
             BuiltIn::Or => "or",
             BuiltIn::Remainder => "%",
+            BuiltIn::Count => "count",
+            BuiltIn::Cond => "cond",
         }
     }
 }

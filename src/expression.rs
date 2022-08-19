@@ -21,7 +21,6 @@ use crate::{
 pub enum Expression {
     Atom(Atom),
     Application(Application),
-    Cond(Vec<Expression>),
     If(Box<If>),
     IfElse(Box<IfElse>),
     Binding(Box<Binding>),
@@ -82,15 +81,15 @@ impl Expression {
                     expr.evaluate(env)
                 })?;
             }
-            Expression::Cond(conditions) => {
-                for cond in conditions.iter_mut() {
-                    cond.resolve_all(
-                        fn_arguments,
-                        received_arguments,
-                        env,
-                    )?;
-                }
-            }
+            // Expression::Cond(conditions) => {
+            //     for cond in conditions.iter_mut() {
+            //         cond.resolve_all(
+            //             fn_arguments,
+            //             received_arguments,
+            //             env,
+            //         )?;
+            //     }
+            // }
             Expression::Application(app) => {
                 for expression in app.arguments.iter_mut() {
                     expression.resolve_all(
@@ -183,7 +182,6 @@ impl fmt::Display for Expression {
                     if_else.if_false
                 )
             }
-            Expression::Cond(_) => f.write_str("cond (TODO)"),
         }
     }
 }
