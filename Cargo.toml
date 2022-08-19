@@ -10,6 +10,7 @@ argv = "0.1.6"
 indexmap = "1.9.1"
 nom = "7.1.1"
 rustc-hash = "1.1.0"
+slicedisplay = "0.2.1"
 thiserror = "1.0.32"
 
 [profile.release]

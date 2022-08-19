@@ -136,6 +136,11 @@ impl Evaluable for Expression {
             Expression::Cond(conditions) => {
                 eval_cond(conditions, env)
             }
+            Expression::List(list) => {
+                // Avoid processing the list until strictly
+                // necessary
+                Ok(Expression::List(list))
+            }
         }
     }
 }

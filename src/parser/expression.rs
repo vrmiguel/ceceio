@@ -32,27 +32,49 @@ pub fn parse_expression(input: &str) -> IResult<Expression> {
             parse_lambda.map(Box::new).map(Expression::Lambda),
             parse_application.map(Expression::Application),
             parse_cond.map(Expression::Cond),
+            parse_list.map(Expression::List),
         )),
     )(input)
 }
 
-fn parse_argument_list(
+fn parse_list(input: &str) -> IResult<Vec<Expression>> {
+    parse_square_brackets_enclosed(many0(parse_expression))(
+        input,
+    )
+}
+
+fn parse_identifier_list(
     input: &str,
 ) -> IResult<Vec<SmallString>> {
-    delimited(
-        preceded(multispace0, tag("[")),
-        many0(preceded(
-            multispace0,
-            parse_identifier.map(SmallString::new),
-        )),
-        preceded(multispace0, tag("]")),
-    )(input)
+    parse_square_brackets_enclosed(many0(preceded(
+        multispace0,
+        parse_identifier.map(SmallString::new),
+    )))(input)
+}
+
+fn parse_square_brackets_enclosed<'a, T, F>(
+    inner: F,
+) -> impl FnMut(&'a str) -> IResult<T>
+where
+    F: Parser<&'a str, T, VerboseError<&'a str>>,
+{
+    preceded(
+        multispace0,
+        delimited(
+            char('['),
+            preceded(multispace0, inner),
+            context(
+                "closing brackets",
+                cut(preceded(multispace0, char(']'))),
+            ),
+        ),
+    )
 }
 
 fn parse_lambda(input: &str) -> IResult<Lambda> {
     fn parse_lambda_inner(input: &str) -> IResult<Lambda> {
         let (rest, _) = tag("fn ")(input)?;
-        let (rest, arguments) = parse_argument_list(rest)?;
+        let (rest, arguments) = parse_identifier_list(rest)?;
         let (rest, body) = parse_expression(rest)?;
 
         let lambda = Lambda { arguments, body };
@@ -169,7 +191,7 @@ fn parse_cond(input: &str) -> IResult<Vec<Expression>> {
 #[cfg(test)]
 mod tests {
     use super::{
-        parse_application, parse_argument_list, parse_binding,
+        parse_application, parse_binding, parse_identifier_list,
         parse_lambda, Application,
     };
     use crate::{
@@ -180,7 +202,7 @@ mod tests {
             BuiltIn, Expression,
         },
         parse_expression,
-        parser::expression::{parse_cond, parse_if},
+        parser::expression::{parse_cond, parse_if, parse_list},
         SmallString,
     };
 
@@ -420,12 +442,15 @@ mod tests {
     #[test]
     fn parses_argument_lists() {
         assert_eq!(
-            parse_argument_list("[] "),
+            parse_identifier_list("[] "),
             Ok((" ", vec![]))
         );
-        assert_eq!(parse_argument_list("[ ]"), Ok(("", vec![])));
         assert_eq!(
-            parse_argument_list("[x y]"),
+            parse_identifier_list("[ ]"),
+            Ok(("", vec![]))
+        );
+        assert_eq!(
+            parse_identifier_list("[x y]"),
             Ok((
                 "",
                 vec![
@@ -435,7 +460,7 @@ mod tests {
             ))
         );
         assert_eq!(
-            parse_argument_list(" [ x y z w e f     ] "),
+            parse_identifier_list(" [ x y z w e f     ] "),
             Ok((
                 " ",
                 vec![
@@ -479,5 +504,65 @@ mod tests {
         );
 
         assert!(parse_cond("(cond false 2 true)").is_ok());
+    }
+
+    #[test]
+    fn parses_lists() {
+        assert_eq!(
+            parse_list("[true false]"),
+            Ok((
+                "",
+                vec![
+                    Expression::Atom(Atom::Boolean(true)),
+                    Expression::Atom(Atom::Boolean(false)),
+                ]
+            ))
+        );
+
+        assert_eq!(
+            parse_expression("[true false]"),
+            Ok((
+                "",
+                Expression::List(vec![
+                    Expression::Atom(Atom::Boolean(true)),
+                    Expression::Atom(Atom::Boolean(false)),
+                ])
+            ))
+        );
+
+        assert_eq!(
+            parse_expression("[true [true false]]"),
+            Ok((
+                "",
+                Expression::List(vec![
+                    Expression::Atom(Atom::Boolean(true)),
+                    Expression::List(vec![
+                        Expression::Atom(Atom::Boolean(true)),
+                        Expression::Atom(Atom::Boolean(false)),
+                    ]),
+                ])
+            ))
+        );
+
+        assert_eq!(
+            parse_expression("[true [true [true false]]]"),
+            Ok((
+                "",
+                Expression::List(vec![
+                    Expression::Atom(Atom::Boolean(true)),
+                    Expression::List(vec![
+                        Expression::Atom(Atom::Boolean(true)),
+                        Expression::List(vec![
+                            Expression::Atom(Atom::Boolean(
+                                true
+                            )),
+                            Expression::Atom(Atom::Boolean(
+                                false
+                            )),
+                        ]),
+                    ]),
+                ])
+            ))
+        );
     }
 }

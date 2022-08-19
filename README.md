@@ -74,14 +74,14 @@ Embeddable tree-walk interpreter for a "mostly lazy" Lisp-like scripting languag
     );
 
     assert!(interp
-        .parse_and_eval("(def is-even? (fn [x] (= (% x 2) 0)))")
+        .parse_and_eval("(def even? (fn [x] (= (% x 2) 0)))")
         .is_ok());
     assert_eq!(
-        interp.parse_and_eval("(is-even? 2)").unwrap(),
+        interp.parse_and_eval("(even? 2)").unwrap(),
         true.into()
     );
     assert_eq!(
-        interp.parse_and_eval("(is-even? 3)").unwrap(),
+        interp.parse_and_eval("(even? 3)").unwrap(),
         false.into()
     );
 ```

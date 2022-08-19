@@ -7,6 +7,7 @@ pub mod builtin;
 pub mod elements;
 
 pub use builtin::BuiltIn;
+use slicedisplay::SliceDisplay;
 
 use self::elements::{
     Application, Atom, Binding, If, IfElse, Lambda,
@@ -25,6 +26,7 @@ pub enum Expression {
     IfElse(Box<IfElse>),
     Binding(Box<Binding>),
     Lambda(Box<Lambda>),
+    List(Vec<Expression>),
 }
 
 impl Expression {
@@ -152,6 +154,13 @@ impl From<f64> for Expression {
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Expression::List(expressions) => {
+                write!(
+                    f,
+                    "{}",
+                    expressions.display().delimiter(' ')
+                )
+            }
             Expression::Lambda(_) => f.write_str("<function>"),
             Expression::Atom(atom) => write!(f, "{atom}"),
             Expression::Application(app) => write!(f, "{app}"),

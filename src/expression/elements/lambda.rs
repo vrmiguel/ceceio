@@ -45,6 +45,11 @@ impl Lambda {
                 // them. E.g.: `(fn [] 3)`
                 Ok(Expression::Atom(atom))
             }
+            Expression::List(list) => {
+                // Similarly, we'll only evaluate the contents of
+                // lists whenever they get consumed by something
+                Ok(Expression::List(list))
+            }
             Expression::Application(_)
             | Expression::If(_)
             | Expression::IfElse(_)

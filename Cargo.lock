@@ -22,6 +22,7 @@ dependencies = [
  "indexmap",
  "nom",
  "rustc-hash",
+ "slicedisplay",
  "thiserror",
 ]
 
@@ -86,6 +87,12 @@ name = "rustc-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
+
+[[package]]
+name = "slicedisplay"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d14c96decbfdcfb06a2b824897334b3e249cad1616401c453be28e76b4beb9d"
 
 [[package]]
 name = "syn"
