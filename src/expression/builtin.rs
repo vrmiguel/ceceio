@@ -1,5 +1,6 @@
 use std::ops::Not;
 
+use super::elements::{Application, Lambda};
 use crate::{
     check::ensure_minimum_arity, ensure_exact_arity, Atom, Env,
     Evaluable, Expression, Result,
@@ -36,7 +37,7 @@ pub enum BuiltIn {
 impl BuiltIn {
     pub fn apply(
         self,
-        args: Vec<Expression>,
+        mut args: Vec<Expression>,
         env: &mut Env,
     ) -> Result<Expression> {
         let arity_received = args.len() as _;
@@ -89,31 +90,54 @@ impl BuiltIn {
                 Self::and(expressions)
             }
             BuiltIn::Or => {
-                let expressions = args
-                    .into_iter()
-                    .map(|expr| expr.evaluate(env));
                 ensure_minimum_arity(2, arity_received)?;
-                Self::or(expressions)
+
+                Self::or(args, env)
             }
             BuiltIn::Remainder => {
                 ensure_exact_arity(2, arity_received)?;
 
-                let expressions = args
-                    .into_iter()
-                    .map(|expr| expr.evaluate(env));
-                let mut expressions = expressions;
-
-                // Should not fail since we've just checked arity
-                let lhs =
-                    expressions.next().unwrap()?.as_number()?;
-                let rhs =
-                    expressions.next().unwrap()?.as_number()?;
+                // `pop`s will not fail since we've just checked
+                // arity
+                let rhs = args
+                    .pop()
+                    .unwrap()
+                    .evaluate(env)?
+                    .as_number()?;
+                let lhs = args
+                    .pop()
+                    .unwrap()
+                    .evaluate(env)?
+                    .as_number()?;
 
                 Ok((lhs % rhs).into())
             }
-            BuiltIn::Count => todo!(),
+            BuiltIn::Count => {
+                ensure_exact_arity(2, arity_received)?;
+
+                let arguments = args
+                    .pop()
+                    .unwrap()
+                    .evaluate(env)?
+                    .as_list()?;
+
+                let predicate = args
+                    .pop()
+                    .unwrap()
+                    .evaluate(env)?
+                    .as_lambda()?;
+
+                Self::count(predicate, arguments)
+            }
             BuiltIn::Cond => Self::cond(args, env),
         }
+    }
+
+    fn count(
+        _predicate: Lambda,
+        _arguments: Vec<Expression>,
+    ) -> Result<Expression> {
+        todo!()
     }
 
     fn cond(
@@ -187,9 +211,13 @@ impl BuiltIn {
     }
 
     fn or(
-        expressions: impl Iterator<Item = Result<Expression>>,
+        expressions: Vec<Expression>,
+        env: &mut Env,
     ) -> Result<Expression> {
-        for expression in expressions {
+        for expression in expressions
+            .into_iter()
+            .map(|expr| expr.evaluate(env))
+        {
             let expression = expression?;
             let condition = expression.as_bool()?;
 

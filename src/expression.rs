@@ -51,12 +51,23 @@ impl Expression {
         }
     }
 
-    pub fn as_lambda(&self) -> Result<&Lambda> {
+    pub fn as_lambda(self) -> Result<Lambda> {
         if let Expression::Lambda(lambda) = self {
-            Ok(lambda)
+            Ok(*lambda)
         } else {
             Err(Error::TypeMismatch {
                 expected: "lambda",
+                received: self.rough_type(),
+            })
+        }
+    }
+
+    pub fn as_list(self) -> Result<Vec<Expression>> {
+        if let Expression::List(list) = self {
+            Ok(list)
+        } else {
+            Err(Error::TypeMismatch {
+                expected: "list",
                 received: self.rough_type(),
             })
         }

@@ -91,10 +91,7 @@ impl Evaluable for Application {
                 built_in.apply(self.arguments, env)
             }
             FnIdentifier::Other(identifier) => {
-                let lambda = env
-                    .get_ref(identifier)?
-                    .as_lambda()?
-                    .clone();
+                let lambda = env.get(identifier)?.as_lambda()?;
 
                 lambda.apply(self.arguments, env)
             }
