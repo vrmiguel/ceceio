@@ -33,6 +33,7 @@ pub fn parse_expression(input: &str) -> IResult<Expression> {
             parse_application.map(Expression::Application),
             parse_cond.map(Expression::Cond),
             parse_list.map(Expression::List),
+            parse_quote.map(Expression::List),
         )),
     )(input)
 }
@@ -41,6 +42,20 @@ fn parse_list(input: &str) -> IResult<Vec<Expression>> {
     parse_square_brackets_enclosed(many0(parse_expression))(
         input,
     )
+}
+
+fn parse_quote(input: &str) -> IResult<Vec<Expression>> {
+    preceded(
+        multispace0,
+        delimited(
+            tag("'("),
+            preceded(multispace0, many0(parse_expression)),
+            context(
+                "closing brackets",
+                cut(preceded(multispace0, char(')'))),
+            ),
+        ),
+    )(input)
 }
 
 fn parse_identifier_list(
@@ -160,7 +175,6 @@ fn parse_application(input: &str) -> IResult<Application> {
         input: &str,
     ) -> IResult<(FnIdentifier, Vec<Expression>)> {
         let (rest, name) = parse_fn_identifier(input)?;
-        // let (rest, _) =
 
         let (rest, args) = many0(preceded(
             multispace0,
@@ -546,6 +560,55 @@ mod tests {
 
         assert_eq!(
             parse_expression("[true [true [true false]]]"),
+            Ok((
+                "",
+                Expression::List(vec![
+                    Expression::Atom(Atom::Boolean(true)),
+                    Expression::List(vec![
+                        Expression::Atom(Atom::Boolean(true)),
+                        Expression::List(vec![
+                            Expression::Atom(Atom::Boolean(
+                                true
+                            )),
+                            Expression::Atom(Atom::Boolean(
+                                false
+                            )),
+                        ]),
+                    ]),
+                ])
+            ))
+        );
+    }
+
+    #[test]
+    fn parses_quotes() {
+        assert_eq!(
+            parse_expression("'(true false)"),
+            Ok((
+                "",
+                Expression::List(vec![
+                    Expression::Atom(Atom::Boolean(true)),
+                    Expression::Atom(Atom::Boolean(false)),
+                ])
+            ))
+        );
+
+        assert_eq!(
+            parse_expression("'(true [true false])"),
+            Ok((
+                "",
+                Expression::List(vec![
+                    Expression::Atom(Atom::Boolean(true)),
+                    Expression::List(vec![
+                        Expression::Atom(Atom::Boolean(true)),
+                        Expression::Atom(Atom::Boolean(false)),
+                    ]),
+                ])
+            ))
+        );
+
+        assert_eq!(
+            parse_expression("'(true [true '(true false)])"),
             Ok((
                 "",
                 Expression::List(vec![
