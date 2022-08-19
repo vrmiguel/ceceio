@@ -521,4 +521,49 @@ mod tests {
             8.0.into()
         );
     }
+
+    #[test]
+    fn evaluates_count_expressions() {
+        let mut interp = Interpreter::new();
+
+        assert!(interp
+            .parse_and_eval("(def even? (fn [x] (= (% x 2) 0)))")
+            .is_ok());
+        assert!(interp
+            .parse_and_eval("(def zero? (fn [x] (= x 0)))")
+            .is_ok());
+        matches!(
+            interp
+                .parse_and_eval("(def five-range '(1 2 3 4 5))")
+                .unwrap(),
+            Expression::List(_)
+        );
+
+        assert_eq!(
+            interp
+                .parse_and_eval(
+                    "(count zero? [0 5 0 6 6 4 9 0 3 4 0])"
+                )
+                .unwrap(),
+            4.0.into()
+        );
+
+        assert_eq!(
+            interp
+                .parse_and_eval(
+                    "(count (fn [x] (= (% x 2) 1)) five-range)"
+                )
+                .unwrap(),
+            3.0.into()
+        );
+
+        assert_eq!(
+            interp
+                .parse_and_eval(
+                    "(count (fn [x] (= (% x 2) 1)) [2 4 6 7 8 9 10 12 13])"
+                )
+                .unwrap(),
+            3.0.into()
+        );
+    }
 }

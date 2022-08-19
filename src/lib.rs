@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod cheap_clone;
 mod check;
 mod error;

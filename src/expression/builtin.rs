@@ -1,9 +1,8 @@
 use std::ops::Not;
 
-use super::elements::{Application, Lambda};
 use crate::{
     check::ensure_minimum_arity, ensure_exact_arity, Atom, Env,
-    Evaluable, Expression, Result,
+    Error, Evaluable, Expression, Result, Typed,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -115,29 +114,53 @@ impl BuiltIn {
             BuiltIn::Count => {
                 ensure_exact_arity(2, arity_received)?;
 
-                let arguments = args
-                    .pop()
-                    .unwrap()
-                    .evaluate(env)?
-                    .as_list()?;
-
-                let predicate = args
-                    .pop()
-                    .unwrap()
-                    .evaluate(env)?
-                    .as_lambda()?;
-
-                Self::count(predicate, arguments)
+                Self::count(args, env)
             }
             BuiltIn::Cond => Self::cond(args, env),
         }
     }
 
     fn count(
-        _predicate: Lambda,
-        _arguments: Vec<Expression>,
+        mut expressions: Vec<Expression>,
+        env: &mut Env,
     ) -> Result<Expression> {
-        todo!()
+        let mut acc = 0_usize;
+
+        let arguments = expressions
+            .pop()
+            .unwrap()
+            .evaluate(env)?
+            .as_list()?;
+
+        let predicate =
+            expressions.pop().unwrap().evaluate(env)?;
+
+        let lambda = match predicate {
+            Expression::Atom(Atom::Identifier(identifier)) => {
+                env.get(identifier)?.as_lambda()?
+            }
+            Expression::Lambda(lambda) => *lambda,
+            other => {
+                return Err(Error::TypeMismatch {
+                    expected: "appliable",
+                    received: other.rough_type(),
+                })
+            }
+        };
+
+        for argument in arguments {
+            // TODO: this is very inefficient
+            let cond = lambda
+                .clone()
+                .apply(vec![argument], env)?
+                .as_bool()?;
+
+            if cond {
+                acc += 1;
+            }
+        }
+
+        Ok((acc as f64).into())
     }
 
     fn cond(

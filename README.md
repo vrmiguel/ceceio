@@ -24,6 +24,19 @@ Embeddable tree-walk interpreter for a "mostly lazy" Lisp-like scripting languag
         8.0.into()
     );
 
+    assert!(
+        interp.parse_and_eval("(def one-to-five '(1 2 3 4 5))").is_ok()
+    );
+
+    assert_eq!(
+        interp
+            .parse_and_eval(
+                "(count (fn [x] (= (% x 2) 1)) one-to-five)"
+            )
+            .unwrap(),
+        3.0.into()
+    );
+
     assert_eq!(
         interp.parse_and_eval("(/ (* 2 3) (- 5 6 7))").unwrap(),
         (-0.75).into()
@@ -34,13 +47,12 @@ Embeddable tree-walk interpreter for a "mostly lazy" Lisp-like scripting languag
         5.0.into()
     );
 
-    assert_eq!(
-        interp.parse_and_eval("(def twice (+ x x))").unwrap(),
-        10.0.into()
+    assert!(
+        interp.parse_and_eval("(def twice (fn [x] (+ x x)))").is_ok()
     );
 
     assert_eq!(
-        interp.parse_and_eval("(= twice (* x 2) 10.0)").unwrap(),
+        interp.parse_and_eval("(= (twice x) (* x 2) 10.0)").unwrap(),
         true.into()
     );
 

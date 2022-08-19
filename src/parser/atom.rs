@@ -84,6 +84,10 @@ fn parse_builtin(input: &str) -> IResult<BuiltIn> {
                 BuiltIn::Cond,
                 terminated(tag("cond"), not(alphanumeric1)),
             ),
+            value(
+                BuiltIn::Count,
+                terminated(tag("count"), not(alphanumeric1)),
+            ),
         )),
     )(input)
 }
